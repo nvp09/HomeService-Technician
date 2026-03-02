@@ -36,7 +36,7 @@ const ServiceRequestCard = ({
             {request.date} เวลา {request.time}
           </span>
         </p>
-        <span className="inline sm:hidden text-blue-600">
+        <span className="inline font-medium sm:hidden text-blue-600">
           {request.date} เวลา {request.time}
         </span>
       </div>
