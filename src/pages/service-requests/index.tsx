@@ -76,20 +76,22 @@ const ServiceRequests = () => {
     <TechnicianLayout>
       <div className="font-prompt space-y-4 w-full">
         {/* Location Banner */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <MapPin size={18} className="text-blue-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-[12px] text-blue-400 mb-0.5">
-                ตำแหน่งที่อยู่ปัจจุบัน
-              </p>
-              <p className="text-[14px] text-blue-700 font-medium">
-                332 อาคารเดอะไนน์ทาวเวอร์ เสนานิคม จตุจักร กรุงเทพฯ
-              </p>
-            </div>
+        <div className="bg-blue-100 border border-blue-300 rounded-xl px-5 py-4 flex items-center gap-4">
+          {/* ซ้าย: MapPin icon */}
+          <MapPin size={22} className="text-blue-600 shrink-0" />
+
+          {/* กลาง: ตำแหน่ง + ที่อยู่ — flex-1 กินพื้นที่ที่เหลือ */}
+          <div className="flex-1">
+            <p className="text-[14px] text-blue-800 font-normal">
+              ตำแหน่งที่อยู่ปัจจุบัน
+            </p>
+            <p className="text-[16px] text-blue-600 font-normal">
+              332 อาคารเดอะไนน์ทาวเวอร์ เสนานิคม จตุจักร กรุงเทพฯ
+            </p>
           </div>
-          <button className="flex items-center gap-2 border border-gray-300 bg-white text-gray-700 text-[13px] font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shrink-0 cursor-pointer">
-            <RefreshCw size={14} />
+
+          {/* ขวา: ปุ่มรีเฟรช */}
+          <button className="border border-blue-600 bg-blue-100 text-blue-600 text-[16px] font-medium px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors shrink-0 cursor-pointer">
             รีเฟรช
           </button>
         </div>
@@ -134,7 +136,6 @@ const ServiceRequests = () => {
               onClick={() => setStatus("available")}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[16px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer"
             >
-      
               เปลี่ยนสถานะเป็นพร้อมให้บริการ
             </button>
           </div>

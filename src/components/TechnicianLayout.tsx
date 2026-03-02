@@ -27,7 +27,7 @@ const TechnicianLayout: React.FC<TechnicianLayoutProps> = ({ children }) => {
         </header>
 
         {/* Mobile Header (ใต้ mobile navbar) */}
-        <header className="flex md:hidden items-center h-20 bg-white border-b border-gray-200 px-5 shrink-0">
+        <header className="flex md:hidden items-center h-16 bg-white border-b border-gray-200 px-5 shrink-0">
           <h1 className="text-[16px] font-semibold text-utility-black">
             {pageTitle}
           </h1>

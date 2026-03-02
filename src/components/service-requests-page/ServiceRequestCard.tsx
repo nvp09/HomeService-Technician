@@ -38,7 +38,7 @@ const ServiceRequestCard = ({
       </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[14px] mb-4">
+      <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[14px] mb-7">
         <span className="headline-5 text-gray-700">รายการ</span>
         <span className="text-[16px] text-utility-black font-normal">{request.items}</span>
 
