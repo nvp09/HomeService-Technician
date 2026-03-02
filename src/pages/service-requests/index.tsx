@@ -134,7 +134,7 @@ const ServiceRequests = () => {
             </div>
             <button
               onClick={() => setStatus("available")}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[16px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[16px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer mt-5"
             >
               เปลี่ยนสถานะเป็นพร้อมให้บริการ
             </button>
