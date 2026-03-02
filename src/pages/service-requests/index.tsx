@@ -117,25 +117,24 @@ const ServiceRequests = () => {
           </div>
         ) : (
           /* Status: Unavailable → แสดงหน้าแจ้งเตือน */
-          <div className="bg-white rounded-xl border border-gray-200 py-16 flex flex-col items-center justify-center gap-4 text-center px-6">
+          <div className="bg-white rounded-xl border border-gray-300 py-16 flex flex-col items-center justify-center gap-4 text-center px-6">
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
               <Bell size={32} className="text-blue-500" />
             </div>
             <div>
-              <h3 className="text-[16px] font-semibold text-gray-900 mb-2">
+              <h3 className="text-[20px] font-semibold text-gray-900 mb-2">
                 ต้องการรับแจ้งเตือนคำขอบริการสั่งซ่อม?
               </h3>
-              <p className="text-[13px] text-gray-500 max-w-xs mx-auto">
-                เปิดใช้งานสถานะพร้อมให้บริการเพื่อแสดงรายการและรับงานซ่อมในบริเวณตำแหน่งที่คุณอยู่
+              <p className="text-[16px] text-gray-700 font-light mx-auto">
+                เปิดใช้งานสถานะพร้อมให้บริการ
+                เพื่อแสดงรายการและรับงานซ่อมในบริเวณตำแหน่งที่คุณอยู่{" "}
               </p>
             </div>
             <button
               onClick={() => setStatus("available")}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[16px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer"
             >
-              <span className="w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center text-[11px] font-bold">
-                6
-              </span>
+      
               เปลี่ยนสถานะเป็นพร้อมให้บริการ
             </button>
           </div>
