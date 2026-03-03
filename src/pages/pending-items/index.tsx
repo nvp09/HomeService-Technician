@@ -1,19 +1,38 @@
+import { useState } from "react";
 import TechnicianLayout from "@/components/TechnicianLayout";
-import React from "react";
+import PendingHeader from "@/features/technician/pending/components/PendingHeader";
+import PendingTable from "@/features/technician/pending/components/PendingTable";
 
-const PendingItems = () => {
+export default function TechnicianPendingPage() {
+
+  // ================= STATE =================
+  const [search, setSearch] = useState<string>("");
+
+  // service type
+  const [service, setService] = useState<string>("ทั้งหมด");
+
+  // sort type ช
+  const [sort, setSort] =
+    useState<"nearest" | "latest">("nearest");
+
   return (
     <TechnicianLayout>
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Pending Items</h1>
-        <p>
-          Here you can view and manage all your pending tasks, appointments, or
-          any other items that require your attention as a technician.
-        </p>
-        {/* Add components to display and manage pending items here */}
-      </div>
+
+      <PendingHeader
+        search={search}
+        setSearch={setSearch}
+        service={service}
+        setService={setService}
+        sort={sort}
+        setSort={setSort}
+      />
+
+      <PendingTable
+        search={search}
+        service={service}
+        sort={sort}
+      />
+
     </TechnicianLayout>
   );
-};
-
-export default PendingItems;
+}
