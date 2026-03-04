@@ -1,29 +1,17 @@
-import TechnicianLayout
-  from "@/components/TechnicianLayout";
+import TechnicianLayout from "@/components/layout/TechnicianLayout";
 
-import AccountForm
-  from "@/features/account-settings/components/AccountForm";
-
-import AccountHeaderActions
-  from "@/features/account-settings/components/AccountHeaderActions";
-
-import {
-  AccountFormProvider,
-} from "@/features/account-settings/context/AccountFormContext";
-
-export default function AccountSettingsPage() {
-
+const index = () => {
   return (
-    <AccountFormProvider>
-
-      <TechnicianLayout
-        headerActions={<AccountHeaderActions />}
-      >
-        <div className="p-4 md:p-6 lg:p-8">
-          <AccountForm />
-        </div>
-      </TechnicianLayout>
-
-    </AccountFormProvider>
+    <TechnicianLayout>
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">ตั้งค่าบัญชี</h1>
+        <p>
+          นี่คือหน้าตั้งค่าบัญชีของช่างเทคนิค คุณสามารถแก้ไขข้อมูลส่วนตัว
+          เปลี่ยนรหัสผ่าน และตั้งค่าการแจ้งเตือนได้ที่นี่
+        </p>
+      </div>
+    </TechnicianLayout>
   );
-}
+};
+
+export default index;

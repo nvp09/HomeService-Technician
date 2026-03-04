@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MapPin, RefreshCw, Bell } from "lucide-react";
-import TechnicianLayout from "@/components/TechnicianLayout";
+import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import ServiceRequestCard, {
   ServiceRequest,
 } from "@/components/service-requests-page/ServiceRequestCard";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import TechnicianLayout from "@/components/TechnicianLayout";
+import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import PendingHeader from "@/features/technician/pending/components/PendingHeader";
 import PendingTable from "@/features/technician/pending/components/PendingTable";
 

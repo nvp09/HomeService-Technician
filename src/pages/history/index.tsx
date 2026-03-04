@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import TechnicianLayout from "@/components/TechnicianLayout";
+import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import HistoryList, { HistoryOrder } from "./HistoryList";
 import HistoryDetail, { HistoryDetailData } from "./HistoryDetail";
 
