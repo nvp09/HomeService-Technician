@@ -34,7 +34,7 @@ const AccountSettingsPage = () => {
 
   const headerActions = (
     <>
-      <button className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-[15px] font-medium hover:bg-gray-50 transition-colors cursor-pointer">
+      <button className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-[15px] font-medium hover:bg-blue-100 hover:border-blue-500 transition-colors cursor-pointer">
         ยกเลิก
       </button>
       <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[15px] font-medium hover:bg-blue-700 transition-colors cursor-pointer">
@@ -45,8 +45,8 @@ const AccountSettingsPage = () => {
 
   return (
     <TechnicianLayout headerActions={headerActions}>
-      <div className="w-full font-prompt overflow-hidden">
-        <div className="bg-white rounded-xl border border-gray-200">
+      <div className="w-full font-prompt overflow-hidden px-0">
+        <div className="bg-white rounded-lg border border-gray-200">
           {/* ===== Section 1: รายละเอียดบัญชี ===== */}
           <div className="p-4 sm:p-8">
             <h2 className="text-[20px] font-medium text-black mb-6">
@@ -54,7 +54,7 @@ const AccountSettingsPage = () => {
             </h2>
 
             {/* ใช้ flex-col gap-5 เพื่อเว้นระยะระหว่างแต่ละ row */}
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-7">
               {/* ชื่อ */}
               <div className="flex flex-row items-center gap-4">
                 <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0">
@@ -64,7 +64,7 @@ const AccountSettingsPage = () => {
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="flex-1 min-w-0 h-11 px-4 border border-gray-300 rounded-lg text-[15px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -77,54 +77,50 @@ const AccountSettingsPage = () => {
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="flex-1 min-w-0 h-11 px-4 border border-gray-300 rounded-lg text-[15px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[15px] text-black outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
               {/* เบอร์ติดต่อ */}
               <div className="flex flex-row items-center gap-4">
-                <label className="text-[16px] font-medium text-gray-700 w-28 shrink-0">
+                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0">
                   เบอร์ติดต่อ<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="flex-1 min-w-0 h-11 px-4 border border-gray-300 rounded-lg text-[15px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
               {/* ตำแหน่งที่อยู่ปัจจุบัน */}
               {/* items-start + pt-2.5 บน label เพราะ value อาจขึ้นหลายบรรทัด */}
               <div className="flex flex-row items-start gap-6">
-                <label className="text-[16px] font-medium text-gray-700 w-36 shrink-0 pt-2.5">
+                <label className="text-[16px] font-medium text-gray-700 w-20 shrink-0 pt-2.5">
                   ตำแหน่งที่อยู่ปัจจุบัน<span className="text-red-600">*</span>
                 </label>
-                <div className="flex-1 flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 min-h-11 px-4 py-2.5 border border-gray-300 rounded-lg text-[15px] text-gray-400 bg-gray-50 leading-relaxed">
+                <div className="flex-1 flex flex-col sm:flex-row gap-3 min-w-0">
+                  <div className="flex-1 min-h-11 px-4 py-2.5 border border-gray-300 rounded-lg text-[16px] text-gray-500 leading-relaxed overflow-hidden">
                     {location}
                   </div>
-                  <button className="flex items-center justify-center gap-2 h-11 px-5 border border-gray-300 rounded-lg text-[15px] text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer shrink-0">
-                    <RefreshCw size={15} />
+                  <button className="flex items-center justify-center gap-2 h-11 w-28 px-5 border border-blue-600 rounded-lg text-[16px] text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer shrink-0 font-medium">
+                    <RefreshCw size={17} />
                     รีเฟรช
                   </button>
                 </div>
               </div>
+              <hr className="border-t border-gray-300" />
             </div>
           </div>
 
           {/* ===== Section 2: สถานะบัญชี ===== */}
-          <div className="p-6 sm:p-8">
-            <h2 className="text-[16px] font-semibold text-gray-900 mb-4">
+          <div className="px-4 py-2 sm:p-8 ">
+            <h2 className="text-[20px] font-semibold text-black mb-4">
               สถานะบัญชี
             </h2>
 
             <div className="flex items-start gap-3">
-              {/* วงกลมตัวเลข 1 */}
-              <span className="w-5 h-5 rounded-full bg-pink-500 text-white text-[11px] flex items-center justify-center shrink-0 mt-0.5">
-                1
-              </span>
-
               {/* Toggle switch */}
               <button
                 onClick={() => setIsAvailable((v) => !v)}
@@ -140,21 +136,22 @@ const AccountSettingsPage = () => {
               </button>
 
               {/* Label + คำอธิบาย */}
-              <div>
-                <p className="text-[15px] font-medium text-gray-900">
+              <div className="mb-5">
+                <p className="text-[18px] font-medium text-black">
                   พร้อมให้บริการ
                 </p>
-                <p className="text-[13px] text-gray-500 mt-0.5">
+                <p className="text-[16px] text-black mt-0.5 font-light">
                   ระบบจะแสดงคำสั่งซ่อมในบริเวณใกล้เคียงตำแหน่งที่อยู่ปัจจุบัน
                   ให้สามารถเลือกรับงานได้
                 </p>
               </div>
             </div>
+            <hr className="border-t border-gray-300" />
           </div>
 
           {/* ===== Section 3: บริการที่รับซ่อม ===== */}
-          <div className="p-6 sm:p-8">
-            <h2 className="text-[16px] font-semibold text-gray-900 mb-4">
+          <div className="px-6 py-3 sm:p-8">
+            <h2 className="text-[20px] font-semibold text-black mb-4">
               บริการที่รับซ่อม
             </h2>
 
@@ -191,7 +188,7 @@ const AccountSettingsPage = () => {
                         </svg>
                       )}
                     </div>
-                    <span className="text-[15px] text-gray-900 select-none">
+                    <span className="text-[16px] text-black select-none">
                       {service.name}
                     </span>
                   </label>

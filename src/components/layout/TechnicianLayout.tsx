@@ -59,7 +59,7 @@ const TechnicianLayout: React.FC<TechnicianLayoutProps> = ({
 
         {/* Main content */}
         <main className="flex-1 overflow-auto bg-[#F3F4F6]">
-          <div className="p-6">{children}</div>
+          <div className="px-4 py-6">{children}</div>
         </main>
       </div>
     </div>
