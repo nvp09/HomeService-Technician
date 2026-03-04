@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
 
+// ตัวอย่างข้อมูลบริการทั้งหมด (ในระบบจริงอาจดึงมาจาก API)
 const ALL_SERVICES = [
   { id: 1, name: "ล้างแอร์" },
   { id: 2, name: "ติดตั้งแอร์" },
@@ -34,10 +35,10 @@ const AccountSettingsPage = () => {
 
   const headerActions = (
     <>
-      <button className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-[15px] font-medium hover:bg-blue-100 hover:border-blue-500 transition-colors cursor-pointer">
+      <button className="px-5 py-2 rounded-lg border border-blue-600 text-blue-600 text-[16px] font-medium hover:bg-blue-100 hover:border-blue-500 transition-colors cursor-pointer sm:px-6">
         ยกเลิก
       </button>
-      <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[15px] font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+      <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[16px] font-medium hover:bg-blue-700 transition-colors cursor-pointer sm:px-6">
         ยืนยัน
       </button>
     </>
@@ -57,54 +58,54 @@ const AccountSettingsPage = () => {
             <div className="flex flex-col gap-7">
               {/* ชื่อ */}
               <div className="flex flex-row items-center gap-4">
-                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0">
+                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   ชื่อ<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
               {/* นามสกุล */}
               <div className="flex flex-row items-center gap-4">
-                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0">
+                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   นามสกุล<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[15px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
               {/* เบอร์ติดต่อ */}
               <div className="flex flex-row items-center gap-4">
-                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0">
+                <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   เบอร์ติดต่อ<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
               {/* ตำแหน่งที่อยู่ปัจจุบัน */}
               {/* items-start + pt-2.5 บน label เพราะ value อาจขึ้นหลายบรรทัด */}
               <div className="flex flex-row items-start gap-6">
-                <label className="text-[16px] font-medium text-gray-700 w-20 shrink-0 pt-2.5">
+                <label className="text-[16px] font-medium text-gray-700 w-20 shrink-0 pt-2.5 sm:w-43">
                   ตำแหน่งที่อยู่ปัจจุบัน<span className="text-red-600">*</span>
                 </label>
-                <div className="flex-1 flex flex-col sm:flex-row gap-3 min-w-0">
-                  <div className="flex-1 min-h-11 px-4 py-2.5 border border-gray-300 rounded-lg text-[16px] text-gray-500 leading-relaxed overflow-hidden">
+                <div className="flex-1 flex flex-col sm:flex-row gap-5 min-w-0">
+                  <div className="flex-1 min-h-11 px-4 py-2.5 border border-gray-300 rounded-lg text-[16px] text-gray-500 leading-relaxed overflow-hidden sm:max-w-xl">
                     {location}
                   </div>
-                  <button className="flex items-center justify-center gap-2 h-11 w-28 px-5 border border-blue-600 rounded-lg text-[16px] text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer shrink-0 font-medium">
+                  <button className="flex items-center justify-center gap-2 h-13 w-28 px-5 border border-blue-600 rounded-lg text-[16px] text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer shrink-0 font-medium">
                     <RefreshCw size={17} />
                     รีเฟรช
                   </button>
@@ -115,7 +116,7 @@ const AccountSettingsPage = () => {
           </div>
 
           {/* ===== Section 2: สถานะบัญชี ===== */}
-          <div className="px-4 py-2 sm:p-8 ">
+          <div className="px-4 py-2 sm:px-4 sm:py-4 sm:flex sm:items-start sm:gap-24">
             <h2 className="text-[20px] font-semibold text-black mb-4">
               สถานะบัญชี
             </h2>
@@ -146,11 +147,12 @@ const AccountSettingsPage = () => {
                 </p>
               </div>
             </div>
-            <hr className="border-t border-gray-300" />
           </div>
 
+          <hr className="border-t border-gray-300 mx-4 sm:mx-8" />
+
           {/* ===== Section 3: บริการที่รับซ่อม ===== */}
-          <div className="px-6 py-3 sm:p-8">
+          <div className="px-6 py-3 sm:p-8 sm:flex sm:gap-18">
             <h2 className="text-[20px] font-semibold text-black mb-4">
               บริการที่รับซ่อม
             </h2>
