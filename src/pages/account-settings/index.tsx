@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { RefreshCw } from "lucide-react";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
+import axios from "axios";
 
 // ตัวอย่างข้อมูลบริการทั้งหมด (ในระบบจริงอาจดึงมาจาก API)
 const ALL_SERVICES = [
@@ -15,17 +16,83 @@ const ALL_SERVICES = [
   { id: 9, name: "ติดตั้งเครื่องทำน้ำอุ่น" },
 ];
 
+interface ServiceItem {
+  id: number;
+  name: string;
+  is_selected: boolean;
+}
+
+interface TechnicianProfile {
+  id: number;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  is_available: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  location_updated_at: string | null;
+  services: ServiceItem[];
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 const AccountSettingsPage = () => {
-  const [firstName, setFirstName] = useState("สมาน");
-  const [lastName, setLastName] = useState("เยี่ยมยอด");
-  const [phone, setPhone] = useState("0890002345");
-  const [location] = useState(
-    "332 อาคารเดอะไนน์ทาวเวอร์ เสนานิคม จตุจักร กรุงเทพฯ",
-  );
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [selectedServices, setSelectedServices] = useState<number[]>([
-    1, 2, 3, 4, 5, 7, 9,
-  ]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [allServices, setAllServices] = useState<ServiceItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(`${API_URL}/api/technician/profile`);
+
+      // นำข้อมูลจาก API ไปใส่ใน state ทุก field
+      setFirstName(data.first_name ?? "");
+      setLastName(data.last_name ?? "");
+      setPhone(data.phone ?? "");
+      setIsAvailable(data.is_available ?? false);
+      setLatitude(data.latitude ?? null);
+      setLongitude(data.longitude ?? null);
+
+      // แปลง lat/long เป็นข้อความที่อยู่ (ถ้ามีค่า)
+      if (data.latitude && data.longitude) {
+        setLocation(`${data.latitude}, ${data.longitude}`);
+      }
+
+      // แยก services ออกเป็น 2 ส่วน:
+      // allServices → ทุกบริการ (สำหรับแสดง checkbox)
+      // selectedServices → เฉพาะที่ช่างรับ (is_selected = true)
+      setAllServices(
+        data.services.map((s: { id: number; name: string }) => ({
+          id: s.id,
+          name: s.name,
+        })),
+      );
+      setSelectedServices(
+        data.services
+          .filter((s: { id: number; is_selected: boolean }) => s.is_selected)
+          .map((s: { id: number }) => s.id),
+      );
+    } catch (err) {
+      setError("ไม่สามารถโหลดข้อมูลได้");
+      console.error("Error fetching profile:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const toggleService = (id: number) => {
     setSelectedServices((prev) =>
