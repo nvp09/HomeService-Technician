@@ -53,7 +53,7 @@ const AccountSettingsPage = () => {
   const fetchProfile = async () => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/technician/profile`);
+      const { data } = await axios.get(`${API_URL}/api/technicians/profile`);
 
       // นำข้อมูลจาก API ไปใส่ใน state ทุก field
       setFirstName(data.first_name ?? "");
@@ -65,22 +65,24 @@ const AccountSettingsPage = () => {
 
       // แปลง lat/long เป็นข้อความที่อยู่ (ถ้ามีค่า)
       if (data.latitude && data.longitude) {
-        setLocation(`${data.latitude}, ${data.longitude}`);
+        setLocation(
+          `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}`,
+        );
       }
 
       // แยก services ออกเป็น 2 ส่วน:
       // allServices → ทุกบริการ (สำหรับแสดง checkbox)
       // selectedServices → เฉพาะที่ช่างรับ (is_selected = true)
       setAllServices(
-        data.services.map((s: { id: number; name: string }) => ({
+        data.services.map((s: ServiceItem) => ({
           id: s.id,
           name: s.name,
         })),
       );
       setSelectedServices(
         data.services
-          .filter((s: { id: number; is_selected: boolean }) => s.is_selected)
-          .map((s: { id: number }) => s.id),
+          .filter((s: ServiceItem) => s.is_selected)
+          .map((s: ServiceItem) => s.id),
       );
     } catch (err) {
       setError("ไม่สามารถโหลดข้อมูลได้");
@@ -94,19 +96,98 @@ const AccountSettingsPage = () => {
     fetchProfile();
   }, []);
 
+  // ขอ GPS จาก browser แล้วอัพเดต location + lat/long ใน state
+  const handleRefreshLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Browser ไม่รองรับการดึงตำแหน่ง");
+      return;
+    }
+
+    // ขอ GPS จาก browser ถ้าสำเร็จจะได้ lat/lng → setState
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude: lat, longitude: lng } = position.coords; // coords คือ object ที่มีข้อมูลตำแหน่งของผู้ใช้
+        setLatitude(lat);
+        setLongitude(lng);
+
+        // แปลง lat/lng → ชื่อที่อยู่
+        try {
+          // Nominatim คือ API ของ OpenStreetMap ใช้ฟรีไม่ต้อง API key
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=th`,
+            // accept-language=th → ขอชื่อที่อยู่เป็นภาษาไทย
+          );
+          const data = await response.json();
+
+          // data.display_name คือที่อยู่แบบเต็ม เช่น
+          // "332 ถนนสมมติ แขวงเสนานิคม เขตจตุจักร กรุงเทพมหานคร 10900 ประเทศไทย"
+          setLocation(data.display_name);
+        } catch {
+          // ถ้าแปลงที่อยู่ไม่สำเร็จ → fallback แสดงเป็น lat/lng แทน
+          setLocation(`${lat.toFixed(7)}, ${lng.toFixed(7)}`);
+        }
+      },
+      () => {
+        setError("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึง GPS");
+      },
+    );
+  };
+
+  // handleSave: ส่งข้อมูลทั้งหมดไปอัปเดตที่ backend
+  const handleSave = async () => {
+    setError("");
+    setIsSaving(true);
+    try {
+      await axios.put(`${API_URL}/api/technicians/profile`, {
+        first_name: firstName, // เปลี่ยนจาก first_name เป็น firstName ตาม state
+        last_name: lastName, // เปลี่ยนจาก last_name เป็น lastName ตาม state
+        phone,
+        latitude,
+        longitude,
+        is_available: isAvailable,
+        service_ids: selectedServices, // ส่งเฉพาะ ID ของบริการที่เลือก
+      });
+    } catch (err) {
+      setError("ไม่สามารถบันทึกข้อมูลได้");
+      console.error("Error saving profile:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // toggleService: เพิ่ม/ลบ service id จาก selectedServices
   const toggleService = (id: number) => {
     setSelectedServices((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
   };
 
+  if (isLoading) {
+    return (
+      <TechnicianLayout headerActions={null}>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500 font-prompt">กำลังโหลดข้อมูล...</p>
+        </div>
+      </TechnicianLayout>
+    );
+  }
+
   const headerActions = (
     <>
-      <button className="px-5 py-2 rounded-lg border border-blue-600 text-blue-600 text-[16px] font-medium hover:bg-blue-100 hover:border-blue-500 transition-colors cursor-pointer sm:px-6">
+      {/* ปุ่มยกเลิก: reload หน้าเพื่อดึงข้อมูลเดิมกลับมา */}
+      <button
+        onClick={() => window.location.reload()}
+        className="px-5 py-2 rounded-lg border border-blue-600 text-blue-600 text-[16px] font-medium hover:bg-blue-100 transition-colors cursor-pointer sm:px-6"
+      >
         ยกเลิก
       </button>
-      <button className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[16px] font-medium hover:bg-blue-700 transition-colors cursor-pointer sm:px-6">
-        ยืนยัน
+      {/* ปุ่มยืนยัน: เรียก handleSave */}
+      <button
+        onClick={handleSave}
+        disabled={isSaving} // disable ระหว่างบันทึก ป้องกันกดซ้ำ
+        className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[16px] font-medium hover:bg-blue-700 transition-colors cursor-pointer sm:px-6 disabled:opacity-50"
+      >
+        {isSaving ? "กำลังบันทึก..." : "ยืนยัน"}
       </button>
     </>
   );
@@ -114,65 +195,69 @@ const AccountSettingsPage = () => {
   return (
     <TechnicianLayout headerActions={headerActions}>
       <div className="w-full font-prompt overflow-hidden px-0">
+        {/* ✨ แสดง error ถ้ามี */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[14px]">
+            {error}
+          </div>
+        )}
+
         <div className="bg-white rounded-lg border border-gray-200">
-          {/* ===== Section 1: รายละเอียดบัญชี ===== */}
+          {/* Section 1: รายละเอียดบัญชี — ไม่เปลี่ยน layout เลย แค่เปลี่ยน value และ onChange */}
           <div className="p-4 sm:p-8">
             <h2 className="text-[20px] font-medium text-black mb-6">
               รายละเอียดบัญชี
             </h2>
-
-            {/* ใช้ flex-col gap-5 เพื่อเว้นระยะระหว่างแต่ละ row */}
             <div className="flex flex-col gap-7">
-              {/* ชื่อ */}
               <div className="flex flex-row items-center gap-4">
                 <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   ชื่อ<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
-                  value={firstName}
+                  value={firstName} // 🔄 เปลี่ยนจาก hardcode → state จาก API
                   onChange={(e) => setFirstName(e.target.value)}
                   className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
-              {/* นามสกุล */}
               <div className="flex flex-row items-center gap-4">
                 <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   นามสกุล<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
-                  value={lastName}
+                  value={lastName} // 🔄 เปลี่ยนจาก hardcode → state จาก API
                   onChange={(e) => setLastName(e.target.value)}
                   className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
-              {/* เบอร์ติดต่อ */}
               <div className="flex flex-row items-center gap-4">
                 <label className="text-[16px] font-medium text-gray-700 w-22 shrink-0 sm:w-45">
                   เบอร์ติดต่อ<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="tel"
-                  value={phone}
+                  value={phone} // 🔄 เปลี่ยนจาก hardcode → state จาก API
                   onChange={(e) => setPhone(e.target.value)}
                   className="flex-1 min-w-0 h-13 px-4 border border-gray-300 rounded-lg text-[16px] text-black outline-none focus:border-blue-500 transition-colors sm:max-w-xl"
                 />
               </div>
 
-              {/* ตำแหน่งที่อยู่ปัจจุบัน */}
-              {/* items-start + pt-2.5 บน label เพราะ value อาจขึ้นหลายบรรทัด */}
               <div className="flex flex-row items-start gap-6">
                 <label className="text-[16px] font-medium text-gray-700 w-20 shrink-0 pt-2.5 sm:w-43">
                   ตำแหน่งที่อยู่ปัจจุบัน<span className="text-red-600">*</span>
                 </label>
                 <div className="flex-1 flex flex-col sm:flex-row gap-5 min-w-0">
                   <div className="flex-1 min-h-11 px-4 py-2.5 border border-gray-300 rounded-lg text-[16px] text-gray-500 leading-relaxed overflow-hidden sm:max-w-xl">
-                    {location}
+                    {location || "ยังไม่มีข้อมูลตำแหน่ง"}
                   </div>
-                  <button className="flex items-center justify-center gap-2 h-13 w-28 px-5 border border-blue-600 rounded-lg text-[16px] text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer shrink-0 font-medium">
+                  {/* 🔄 เปลี่ยน onClick → handleRefreshLocation */}
+                  <button
+                    onClick={handleRefreshLocation}
+                    className="flex items-center justify-center gap-2 h-13 w-28 px-5 border border-blue-600 rounded-lg text-[16px] text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer shrink-0 font-medium"
+                  >
                     <RefreshCw size={17} />
                     รีเฟรช
                   </button>
@@ -182,14 +267,12 @@ const AccountSettingsPage = () => {
             </div>
           </div>
 
-          {/* ===== Section 2: สถานะบัญชี ===== */}
+          {/* Section 2: สถานะบัญชี — ไม่เปลี่ยน layout */}
           <div className="px-4 py-2 sm:px-4 sm:py-4 sm:flex sm:items-start sm:gap-24">
             <h2 className="text-[20px] font-semibold text-black mb-4">
               สถานะบัญชี
             </h2>
-
             <div className="flex items-start gap-3">
-              {/* Toggle switch */}
               <button
                 onClick={() => setIsAvailable((v) => !v)}
                 className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 mt-0.5 cursor-pointer ${
@@ -202,8 +285,6 @@ const AccountSettingsPage = () => {
                   }`}
                 />
               </button>
-
-              {/* Label + คำอธิบาย */}
               <div className="mb-5">
                 <p className="text-[18px] font-medium text-black">
                   พร้อมให้บริการ
@@ -218,14 +299,13 @@ const AccountSettingsPage = () => {
 
           <hr className="border-t border-gray-300 mx-4 sm:mx-8" />
 
-          {/* ===== Section 3: บริการที่รับซ่อม ===== */}
+          {/* Section 3: บริการที่รับซ่อม — 🔄 เปลี่ยนจาก ALL_SERVICES hardcode → allServices จาก API */}
           <div className="px-6 py-3 sm:p-8 sm:flex sm:gap-18">
             <h2 className="text-[20px] font-semibold text-black mb-4">
               บริการที่รับซ่อม
             </h2>
-
             <div className="flex flex-col gap-4">
-              {ALL_SERVICES.map((service) => {
+              {allServices.map((service) => {
                 const checked = selectedServices.includes(service.id);
                 return (
                   <label
@@ -233,7 +313,6 @@ const AccountSettingsPage = () => {
                     className="flex items-center gap-3 cursor-pointer"
                     onClick={() => toggleService(service.id)}
                   >
-                    {/* Checkbox สี่เหลี่ยม ไม่มี rounded */}
                     <div
                       className={`w-5 h-5 border-2 flex items-center justify-center shrink-0 transition-colors ${
                         checked
