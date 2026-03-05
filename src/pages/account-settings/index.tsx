@@ -2,6 +2,9 @@ import { useState, useEffect, use } from "react";
 import { RefreshCw } from "lucide-react";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import axios from "axios";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
+import SkeletonLoader from "./SkeletonLoader";
 
 interface ServiceItem {
   id: number;
@@ -33,28 +36,33 @@ const AccountSettingsPage = () => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [allServices, setAllServices] = useState<ServiceItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // แยก loading states
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get<TechnicianProfile>(`${API_URL}/api/technicians/profile`);
+      const { data } = await axios.get<TechnicianProfile>(
+        `${API_URL}/api/technicians/profile`,
+      );
 
       // นำข้อมูลจาก API ไปใส่ใน state ทุก field
       setFirstName(data.first_name ?? "");
       setLastName(data.last_name ?? "");
       setPhone(data.phone ?? "");
       setIsAvailable(data.is_available ?? false);
-      setLatitude(data.latitude ?? null);
-      setLongitude(data.longitude ?? null);
+      setLatitude(data.latitude ? Number(data.latitude) : null);
+      setLongitude(data.longitude ? Number(data.longitude) : null);
 
       // แปลง lat/long เป็นข้อความที่อยู่ (ถ้ามีค่า)
       if (data.latitude && data.longitude) {
-        setLocation(
-          `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}`,
-        );
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        setLocation(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       }
 
       // แยก services ออกเป็น 2 ส่วน:
@@ -68,12 +76,11 @@ const AccountSettingsPage = () => {
         })),
       );
       setSelectedServices(
-        data.services
-          .filter((s) => s.is_selected)
-          .map((s) => s.id),
+        data.services.filter((s) => s.is_selected).map((s) => s.id),
       );
     } catch (err) {
       setError("ไม่สามารถโหลดข้อมูลได้");
+      toast.error("ไม่สามารถโหลดข้อมูลได้กรุณาลองใหม่อีกครั้ง");
       console.error("Error fetching profile:", err);
     } finally {
       setIsLoading(false);
@@ -88,8 +95,10 @@ const AccountSettingsPage = () => {
   const handleRefreshLocation = () => {
     if (!navigator.geolocation) {
       setError("Browser ไม่รองรับการดึงตำแหน่ง");
+      toast.error("Browser ไม่รองรับการดึงตำแหน่ง");
       return;
     }
+    setIsRefreshing(true);
 
     // ขอ GPS จาก browser ถ้าสำเร็จจะได้ lat/lng → setState
     navigator.geolocation.getCurrentPosition(
@@ -112,11 +121,15 @@ const AccountSettingsPage = () => {
           setLocation(data.display_name);
         } catch {
           // ถ้าแปลงที่อยู่ไม่สำเร็จ → fallback แสดงเป็น lat/lng แทน
-          setLocation(`${lat.toFixed(7)}, ${lng.toFixed(7)}`);
+          setLocation(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        } finally {
+          setIsRefreshing(false);
         }
       },
       () => {
         setError("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึง GPS");
+        toast.error("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึง GPS");
+        setIsRefreshing(false);
       },
     );
   };
@@ -135,8 +148,10 @@ const AccountSettingsPage = () => {
         is_available: isAvailable,
         service_ids: selectedServices, // ส่งเฉพาะ ID ของบริการที่เลือก
       });
+      toast.success("อัพเดทข้อมูลของท่านเรียบร้อยแล้ว");
     } catch (err) {
       setError("ไม่สามารถบันทึกข้อมูลได้");
+      toast.error("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
       console.error("Error saving profile:", err);
     } finally {
       setIsSaving(false);
@@ -150,32 +165,44 @@ const AccountSettingsPage = () => {
     );
   };
 
+  // Skeleton — แสดงระหว่างรอ API โหลดครั้งแรก
+  // ทำให้ user รู้ว่า "กำลังโหลด" แทนที่จะเห็นหน้าว่างเปล่า
   if (isLoading) {
+    return <SkeletonLoader />;
+  }
+  // Spinner overlay — แสดงระหว่างรอ GPS + Nominatim
+  // และไม่ควรแก้ไข form ระหว่างที่ตำแหน่งกำลังอัพเดท
+  if (isRefreshing) {
     return (
       <TechnicianLayout headerActions={null}>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 font-prompt">กำลังโหลดข้อมูล...</p>
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-50">
+          <Spinner className="w-10 h-10 text-blue-600" />
+          <p className="text-[16px] text-gray-600 font-prompt">
+            กำลังรีเฟรชตำแหน่งที่อยู่ปัจจุบันของคุณ
+          </p>
         </div>
       </TechnicianLayout>
     );
   }
 
+  // ปุ่มยืนยัน inject เข้า header ผ่าน headerActions prop
+  // เมื่อ isSaving=true → แสดง Spinner แทนข้อความ "ยืนยัน"
+  // disabled ป้องกันการกดซ้ำระหว่างบันทึก
+
   const headerActions = (
     <>
-      {/* ปุ่มยกเลิก: reload หน้าเพื่อดึงข้อมูลเดิมกลับมา */}
       <button
         onClick={() => window.location.reload()}
-        className="px-5 py-2 rounded-lg border border-blue-600 text-blue-600 text-[16px] font-medium hover:bg-blue-100 transition-colors cursor-pointer sm:px-6"
+        className="px-5 py-2 rounded-lg border border-blue-600 text-blue-600 text-[16px] font-medium hover:bg-blue-100 transition-colors cursor-pointer"
       >
         ยกเลิก
       </button>
-      {/* ปุ่มยืนยัน: เรียก handleSave */}
       <button
         onClick={handleSave}
-        disabled={isSaving} // disable ระหว่างบันทึก ป้องกันกดซ้ำ
-        className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[16px] font-medium hover:bg-blue-700 transition-colors cursor-pointer sm:px-6 disabled:opacity-50"
+        disabled={isSaving}
+        className="px-5 py-2 rounded-lg bg-blue-600 text-white text-[16px] font-medium hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-70 min-w-[80px] flex items-center justify-center"
       >
-        {isSaving ? "กำลังบันทึก..." : "ยืนยัน"}
+        {isSaving ? <Spinner className="w-5 h-5 text-white" /> : "ยืนยัน"}
       </button>
     </>
   );
@@ -183,7 +210,7 @@ const AccountSettingsPage = () => {
   return (
     <TechnicianLayout headerActions={headerActions}>
       <div className="w-full font-prompt overflow-hidden px-0">
-        {/* ✨ แสดง error ถ้ามี */}
+        {/* แสดง error ถ้ามี */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[14px]">
             {error}
