@@ -47,7 +47,7 @@ const AccountSettingsPage = () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get<TechnicianProfile>(
-        `${API_URL}/api/technicians/profile`,
+        `${API_URL}/api/technician-profile/profile`,
       );
 
       // นำข้อมูลจาก API ไปใส่ใน state ทุก field
