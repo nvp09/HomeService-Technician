@@ -1,4 +1,7 @@
-import { pendingJobs } from "../services/pending.mock";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import StatusBadge from "@/components/StatusBadge";
+import { getPendingJobs } from "../services/pending.api";
 
 type SortType = "nearest" | "latest";
 
@@ -14,10 +17,45 @@ export default function PendingTable({
   sort,
 }: Props) {
 
+  const router = useRouter();
+
+  // ================= STATE =================
+  const [jobs, setJobs] = useState<any[]>([]);
+
+  // ================= FETCH API =================
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await getPendingJobs();
+
+        console.log("API DATA:", data);
+
+        // แปลง format backend → frontend
+        const formatted = data.map((job: any) => ({
+          id: job.id,
+          service: job.services?.[0] || "-",
+          appointment_date: new Date(job.created_at).toLocaleString("th-TH"),
+          order_code: `AD${String(job.id).padStart(8, "0")}`,
+          price: job.total_price,
+          status: job.status,
+        }));
+
+        setJobs(formatted);
+
+      } catch (error) {
+        console.error("Error fetching pending jobs:", error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
   // ================= FILTER =================
-  let filteredJobs = pendingJobs.filter((job) =>
-    job.service.toLowerCase().includes(search.toLowerCase())
-  );
+  let filteredJobs = jobs
+    .filter((job) => job.status === "pending")
+    .filter((job) =>
+      job.service.toLowerCase().includes(search.toLowerCase())
+    );
 
   if (service !== "ทั้งหมด" && service !== "all") {
     filteredJobs = filteredJobs.filter(
@@ -45,21 +83,22 @@ export default function PendingTable({
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
 
-      {/* ✅ TABLE */}
+      {/* TABLE */}
       <table className="w-full text-sm table-fixed">
 
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <thead className="bg-[#F1F5F9] text-gray-700 font-semibold">
           <tr>
             <th className="p-4 text-left">บริการ</th>
             <th className="p-4 text-left">วันนัดหมาย</th>
             <th className="p-4 text-left">รหัสงาน</th>
             <th className="p-4 text-left">ราคา</th>
+            <th className="p-4 text-left">สถานะ</th>
             <th className="p-4 text-center w-[90px]">Action</th>
           </tr>
         </thead>
 
-        {/* ================= BODY ================= */}
+        {/* BODY */}
         <tbody>
           {filteredJobs.map((job) => (
             <tr
@@ -82,9 +121,15 @@ export default function PendingTable({
                 {job.price} ฿
               </td>
 
-              {/* ✅ ACTION BUTTON */}
+              <td className="p-4">
+                <StatusBadge status={job.status} />
+              </td>
+
               <td className="p-4 text-center">
                 <button
+                  onClick={() =>
+                    router.push(`/technician-job/${job.id}`)
+                  }
                   className="
                     w-9 h-9
                     flex items-center justify-center

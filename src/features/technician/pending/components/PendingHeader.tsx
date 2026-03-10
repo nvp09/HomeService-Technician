@@ -129,7 +129,7 @@ export default function PendingHeader({
 {/* ================= SERVICE DROPDOWN ================= */}
 <div ref={serviceRef} className="relative w-[200px]">
 
-  {/* ✅ LABEL (เพิ่มอย่างเดียว) */}
+  {/* ✅ LABEL */}
   <p className="text-xs text-gray-500 mb-1">
     บริการ
   </p>

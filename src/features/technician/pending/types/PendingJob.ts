@@ -7,4 +7,5 @@ export type PendingJob = {
     customer_name: string;
     phone: string;
     address: string;
+    status: string;
   };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import {
@@ -11,25 +11,33 @@ import {
   Menu,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 export const SIDEBAR_WIDTH = 260;
+
+/* =========================================================
+   MENU ITEMS
+   (UI เดิม ไม่แก้)
+========================================================= */
 
 export const menuItems = [
   {
     name: "คำขอบริการซ่อม",
     path: "/service-requests",
     icon: <Bell size={20} strokeWidth={1.5} />,
-    badge: 3,
+    key: "pending",
   },
   {
     name: "รายการที่รอดำเนินการ",
     path: "/pending-items",
     icon: <ClipboardList size={20} strokeWidth={1.5} />,
+    key: "in_progress",
   },
   {
     name: "ประวัติการซ่อม",
     path: "/history",
     icon: <History size={20} strokeWidth={1.5} />,
+    key: "completed",
   },
   {
     name: "ตั้งค่าบัญชีผู้ใช้",
@@ -39,17 +47,67 @@ export const menuItems = [
 ];
 
 const Sidebar = () => {
+
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const currentPath = router.pathname;
   const { logout } = useAuth();
 
+  /* =========================================================
+     COUNTER STATE
+     เก็บจำนวนงานจาก backend
+  ========================================================= */
+
+  const [counters, setCounters] = useState({
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+  });
+
+  /* =========================================================
+     FETCH COUNTERS
+     เรียก API /technician-pending/counters
+  ========================================================= */
+
+  const fetchCounters = async () => {
+    try {
+
+      const res = await api.get("/technician-pending/counters");
+
+      setCounters(res.data);
+
+    } catch (error) {
+      console.error("Error fetching counters:", error);
+    }
+  };
+
+  /* =========================================================
+     โหลด counters ตอนเปิดหน้า
+  ========================================================= */
+
+  useEffect(() => {
+    fetchCounters();
+  }, []);
+
+  /* =========================================================
+     AUTO REFRESH COUNTERS
+     ทุก 5 วินาที
+  ========================================================= */
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+      fetchCounters();
+    }, 5000);
+
+    return () => clearInterval(interval);
+
+  }, []);
+
   return (
     <>
       {/* ===== MOBILE TOP NAVBAR ===== */}
-      {/* สีน้ำเงินเข้ม, มี Logo ซ้าย + Hamburger ขวา — แสดงเฉพาะ mobile */}
       <div className="fixed top-0 left-0 w-full h-17 bg-blue-950 flex items-center justify-between px-5 md:hidden">
-        {/* Logo */}
         <div
           onClick={() => router.push("/")}
           className="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded-md cursor-pointer"
@@ -60,7 +118,6 @@ const Sidebar = () => {
           </span>
         </div>
 
-        {/* Hamburger icon */}
         <button
           onClick={() => setOpen(true)}
           className="flex flex-col gap-1.5 p-1"
@@ -85,14 +142,12 @@ const Sidebar = () => {
           fixed top-0 h-screen bg-blue-950 z-50 flex flex-col
           transition-transform duration-300
 
-          /* mobile: drawer จากขวา */
           right-0 ${open ? "translate-x-0" : "translate-x-full"}
 
-          /* desktop: fixed ซ้าย เสมอ */
           md:left-0 md:right-auto md:translate-x-0
         `}
       >
-        {/* Logo — desktop only */}
+        {/* Logo */}
         <div className="hidden md:flex p-5 pb-8 px-10">
           <div
             onClick={() => router.push("/")}
@@ -105,7 +160,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* ปุ่มปิด X — mobile only */}
+        {/* ปุ่มปิด mobile */}
         <div className="flex md:hidden justify-start px-4 pt-7 pb-7">
           <button
             onClick={() => setOpen(false)}
@@ -116,10 +171,21 @@ const Sidebar = () => {
           </button>
         </div>
 
-        {/* Menu Items */}
+        {/* =========================================================
+            MENU ITEMS
+        ========================================================= */}
+
         <nav className="flex-1 flex flex-col gap-5">
           {menuItems.map((item) => {
+
             const isActive = currentPath === item.path;
+
+            /* =========================================================
+               ดึง badge จาก counters
+            ========================================================= */
+
+            const badgeValue = item.key ? counters[item.key as keyof typeof counters] : null;
+
             return (
               <Link
                 key={item.path}
@@ -133,15 +199,18 @@ const Sidebar = () => {
                   }`}
               >
                 <span className="shrink-0 pr-3">{item.icon}</span>
+
                 <span className="flex-1 text-[16px] text-gray-100 font-medium">
                   {item.name}
                 </span>
-                {/* Badge แจ้งเตือน */}
-                {item.badge !== undefined && item.badge > 0 && (
+
+                {/* Badge */}
+                {badgeValue !== null && badgeValue > 0 && (
                   <span className="bg-[#C82438] text-white text-xs w-7 h-7 flex items-center justify-center rounded-full shrink-0">
-                    {item.badge}
+                    {badgeValue}
                   </span>
                 )}
+
               </Link>
             );
           })}
@@ -159,6 +228,7 @@ const Sidebar = () => {
             </span>
           </button>
         </div>
+
       </div>
     </>
   );
