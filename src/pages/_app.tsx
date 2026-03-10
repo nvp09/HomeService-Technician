@@ -1,11 +1,15 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Toaster } from "@/components/ui/sonner";
+import jwtInterceptor from "@/utils/jwtInterceptor";
+import { AuthProvider } from "@/contexts/AuthContext";
+
+jwtInterceptor();
 
 export default function App({ Component, pageProps }: AppProps) {
   const toastBase = "!flex !items-center !justify-center !text-center";
   return (
-    <>
+    <AuthProvider>
       <Component {...pageProps} />
 
       <Toaster
@@ -22,6 +26,6 @@ export default function App({ Component, pageProps }: AppProps) {
           },
         }}
       />
-    </>
+    </AuthProvider>
   );
 }

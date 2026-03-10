@@ -21,8 +21,8 @@ function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || userRole !== requiredRole)) {
-      router.replace("/auth/login");
+    if (isLoading === false && (!isAuthenticated || userRole !== requiredRole)) {
+      router.replace("/login-technician");
     }
   }, [isLoading, isAuthenticated, userRole]);
 

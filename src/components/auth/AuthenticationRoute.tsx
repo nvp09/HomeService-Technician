@@ -19,8 +19,8 @@ const AuthenticationRoute = ({
 
   useEffect(() => {
     // ถ้า bypassRedirect = true จะไม่ redirect
-    if (!isLoading && isAuthenticated && !bypassRedirect) {
-      router.replace("/");
+    if (isLoading === false && isAuthenticated && !bypassRedirect) {
+      router.replace("/login-technician");
     }
   }, [isLoading, isAuthenticated, bypassRedirect]);
 

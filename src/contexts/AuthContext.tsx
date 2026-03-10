@@ -34,7 +34,7 @@ interface RegisterData {
 
 interface AuthContextValue {
   state: AuthState;
-  login: (data: LoginData) => Promise<{ error?: string } | void>;
+  login: (data: LoginData) => Promise<{ error?: string; role?: string } | void>;
   logout: () => void;
   register: (data: RegisterData) => Promise<{ error?: string } | void>;
   isAuthenticated: boolean;
@@ -129,7 +129,9 @@ function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   // Fn2: ฟังก์ชันสำหรับเข้าสู่ระบบ โดยจะรับข้อมูลการเข้าสู่ระบบจากผู้ใช้และส่งคำขอ POST ไปยัง API เพื่อทำการตรวจสอบข้อมูลการเข้าสู่ระบบ
-  const login = async (data: LoginData): Promise<{ error?: string } | void> => {
+  const login = async (
+    data: LoginData,
+  ): Promise<{ error?: string; role?: string } | void> => {
     // เริ่มต้นการเข้าสู่ระบบโดยตั้งสถานะ loading เป็น true และล้าง error ก่อนที่จะทำการส่งคำขอเข้าสู่ระบบไปยัง API
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
@@ -143,6 +145,14 @@ function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem("token", token);
       // Fetch and set user details
       await fetchUser();
+      // ← ดึง user ล่าสุดจาก localStorage แทนการอ่านจาก state
+      const userResponse = await axios.get(
+        "http://localhost:4000/api/auth/get-user",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      return { role: userResponse.data.role }; // ← return role กลับไปยังหน้า login เพื่อใช้ตรวจสอบสิทธิ์
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
       const errorMessage = axiosError.response?.data?.error || "Login failed";
@@ -167,7 +177,10 @@ function AuthProvider({ children }: AuthProviderProps) {
       // เริ่มต้นการลงทะเบียนโดยตั้งสถานะ loading เป็น true และล้าง error ก่อน ที่จะทำการส่งคำขอลงทะเบียนไปยัง API
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       // ส่งคำขอลงทะเบียนไปยัง API และรอผลลัพธ์โดยแนบข้อมูลการลงทะเบียนที่ผู้ใช้กรอกเข้ามาเข้าไปกับ request ผ่าน axios.post
-      await axios.post("http://localhost:4000/api/auth/register/technician", data);
+      await axios.post(
+        "http://localhost:4000/api/auth/register/technician",
+        data,
+      );
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
       // หากเกิดข้อผิดพลาดในการลงทะเบียน ให้ดึงข้อความ error จาก response ของ API หากไม่มีให้ใช้ข้อความ "Registration failed" เป็นค่าเริ่มต้น
@@ -194,7 +207,7 @@ function AuthProvider({ children }: AuthProviderProps) {
       loading: false,
       getUserLoading: false,
     });
-    router.push("/login");
+    router.push("/login-technician");
   };
 
   // คำนวณสถานะการเข้าสู่ระบบโดยตรวจสอบว่ามีข้อมูลผู้ใช้ใน state หรือไม่
