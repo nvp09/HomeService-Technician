@@ -1,6 +1,6 @@
 import { ChevronLeft, MapPin, Star } from "lucide-react";
 import React from "react";
-import { HistoryDetailData } from "./history.types";
+import { HistoryDetailData } from "@/services/history/history.types";
 
 
 

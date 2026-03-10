@@ -1,7 +1,7 @@
 import { Search, SquarePen, ChevronDown, MapPin } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
-import { getHistory } from "./history.service";
-import { HistoryOrder } from "./history.types";
+import { getHistory } from "@/services/history/history.service";
+import { HistoryOrder } from "@/services/history/history.types";
 
 const services = [
   "ทั้งหมด",

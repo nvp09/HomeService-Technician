@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import TechnicianLayout from "@/components/TechnicianLayout";
+import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import HistoryList from "./HistoryList";
 import HistoryDetail from "./HistoryDetail";
-import { HistoryDetailData, HistoryOrder } from "./history.types";
-import { getHistoryDetail } from "./history.service";
+import { HistoryDetailData, HistoryOrder } from "@/services/history/history.types";
+import { getHistoryDetail } from "@/services/history/history.service";
 
 const HistoryPage = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
