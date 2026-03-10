@@ -10,6 +10,7 @@ import {
   X,
   Menu,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const SIDEBAR_WIDTH = 260;
 
@@ -41,6 +42,7 @@ const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const currentPath = router.pathname;
+  const { logout } = useAuth();
 
   return (
     <>
@@ -148,11 +150,13 @@ const Sidebar = () => {
         {/* Logout */}
         <div className="pb-8 pt-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={logout}
             className="flex items-center gap-3 px-7 py-4 text-gray-100 hover:bg-white/10 transition-colors w-full cursor-pointer"
           >
             <LogOut size={20} strokeWidth={1.5} />
-            <span className="text-[16px] font-medium text-gray-100 pl-3">ออกจากระบบ</span>
+            <span className="text-[16px] font-medium text-gray-100 pl-3">
+              ออกจากระบบ
+            </span>
           </button>
         </div>
       </div>
