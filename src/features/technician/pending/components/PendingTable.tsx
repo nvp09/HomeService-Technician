@@ -66,7 +66,7 @@ export default function PendingTable({
               key={job.id}
               className="border-t hover:bg-blue-50 transition"
             >
-              <td className="p-4 font-medium text-gray-900 break-words">
+              <td className="p-4 font-medium text-gray-900 break-all">
                 {job.service}
               </td>
 
