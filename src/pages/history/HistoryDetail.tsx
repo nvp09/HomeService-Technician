@@ -1,8 +1,10 @@
-import { ChevronLeft, MapPin, Star } from "lucide-react";
-import React from "react";
+import { ChevronLeft, MapPin, Star, X } from "lucide-react";
+import React, { useState } from "react";
 import { HistoryDetailData } from "@/services/history/history.types";
+import dynamic from "next/dynamic";
 
-
+// Dynamically import the map component (Leaflet requires window/document)
+const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false });
 
 interface HistoryDetailProps {
   order: HistoryDetailData;
@@ -10,6 +12,9 @@ interface HistoryDetailProps {
 }
 
 const HistoryDetail: React.FC<HistoryDetailProps> = ({ order, onBack }) => {
+  const [showMap, setShowMap] = useState(false);
+  const hasCoordinates = order.latitude !== null && order.longitude !== null;
+
   return (
     <div className="max-w-[1000px] mx-auto pb-10">
       {/* Page Secondary Header / Breadcrumbs */}
@@ -56,10 +61,37 @@ const HistoryDetail: React.FC<HistoryDetailProps> = ({ order, onBack }) => {
               <span className="text-gray-700 font-medium body-3 leading-relaxed">
                 {order.location}
               </span>
-              <button className="flex items-center gap-1.5 text-[#336DF2] font-semibold text-[14px] hover:text-blue-700 transition-colors w-fit">
-                <MapPin size={16} fill="currentColor" fillOpacity={0.1} />
-                <span className="underline underline-offset-2">ดูแผนที่</span>
-              </button>
+              {hasCoordinates && (
+                <button
+                  onClick={() => setShowMap(!showMap)}
+                  className="flex items-center gap-1.5 text-[#336DF2] font-semibold text-[14px] hover:text-blue-700 transition-colors w-fit"
+                >
+                  <MapPin size={16} fill="currentColor" fillOpacity={0.1} />
+                  <span className="underline underline-offset-2">
+                    {showMap ? "ซ่อนแผนที่" : "ดูแผนที่"}
+                  </span>
+                </button>
+              )}
+
+              {/* Leaflet Map */}
+              {showMap && hasCoordinates && (
+                <div className="mt-3 rounded-xl overflow-hidden border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMap(false)}
+                      className="absolute top-3 right-3 z-[1000] bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors"
+                      title="ปิดแผนที่"
+                    >
+                      <X size={16} className="text-gray-600" />
+                    </button>
+                    <LeafletMap
+                      latitude={order.latitude!}
+                      longitude={order.longitude!}
+                      address={order.location}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <span className="text-gray-500 font-medium body-3">รหัสคำสั่งซ่อม</span>

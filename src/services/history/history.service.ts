@@ -24,6 +24,8 @@ export const getHistoryDetail = async (orderId: string): Promise<HistoryDetailDa
     items: data.items.map((i: { name: string; quantity: number }) => `${i.name} ${i.quantity} รายการ`).join(", "),
     date: data.date_time,
     location: data.address,
+    latitude: data.latitude,
+    longitude: data.longitude,
     price: data.total_price,
     customerName: data.customer_name,
     phone: data.customer_phone,

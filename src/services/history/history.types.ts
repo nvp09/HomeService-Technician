@@ -12,6 +12,8 @@ export interface HistoryDetailData {
   items: string;
   date: string;
   location: string;
+  latitude: number | null;
+  longitude: number | null;
   price: string;
   customerName: string;
   phone: string;
