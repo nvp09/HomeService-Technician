@@ -10,6 +10,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "สมชาย ใจดี",
     phone: "0800001233",
     address: "กรุงเทพมหานคร",
+    status: "pending",
   },
   {
     id: "2",
@@ -20,6 +21,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "สมหญิง ใจงาม",
     phone: "0899999999",
     address: "นนทบุรี",
+    status: "pending",
   },
   {
     id: "3",
@@ -30,6 +32,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "วิชัย ทองดี",
     phone: "0812345678",
     address: "ปทุมธานี",
+    status: "pending",
   },
   {
     id: "4",
@@ -40,6 +43,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "กมลพร แสงทอง",
     phone: "0822222222",
     address: "สมุทรปราการ",
+    status: "pending",
   },
   {
     id: "5",
@@ -50,6 +54,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "อนันต์ สุขใจ",
     phone: "0833333333",
     address: "กรุงเทพมหานคร",
+    status: "pending",
   },
   {
     id: "6",
@@ -60,6 +65,7 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "สุดา ใจเย็น",
     phone: "0844444444",
     address: "นนทบุรี",
+    status: "pending",
   },
   {
     id: "7",
@@ -70,6 +76,6 @@ export const pendingJobs: PendingJob[] = [
     customer_name: "ประยุทธ คงดี",
     phone: "0855555555",
     address: "ชลบุรี",
+    status: "pending",
   },
-  
 ];
