@@ -14,8 +14,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 // แปลง "2024-04-25" → "25/04/2567" (พ.ศ.)
 const formatThaiDate = (dateStr: string): string => {
-  const [y, m, d] = dateStr.split("-");
-  return `${d}/${m}/${Number(y) + 543}`;
+  const date = new Date(dateStr);
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const y = date.getUTCFullYear() + 543;
+  return `${d}/${m}/${y}`;
 };
 
 // แปลง "13:00:00" → "13.00 น."
