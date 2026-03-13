@@ -1,76 +1,146 @@
-import { useState } from "react";
-import { MapPin, RefreshCw, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Bell } from "lucide-react";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
-import ServiceRequestCard, {
-  ServiceRequest,
-} from "@/components/service-requests-page/ServiceRequestCard";
-import AcceptModal from "@/components/service-requests-page/AcceptModal";
+import ServiceRequestCard, { ServiceRequest } from "./ServiceRequestCard";
+import AcceptModal from "./AcceptModal";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useLocation } from "@/hooks/useLocation";
+import { Spinner } from "@/components/ui/spinner";
+import axios from "axios";
+import { toast } from "sonner";
 
-// Mock Data
-const MOCK_REQUESTS: ServiceRequest[] = [
-  {
-    id: 1,
-    serviceName: "ล้างแอร์",
-    date: "25/04/2563",
-    time: "13.00 น.",
-    items: "ล้างแอร์ 9,000 - 18,000 BTU, ติดผนัง 2 เครื่อง",
-    orderCode: "AD04071205",
-    totalPrice: "1,550.00 ฿",
-    address: "444/4 คอนโดสุภาลัย เสนานิคม จตุจักร กรุงเทพฯ",
-  },
-  {
-    id: 2,
-    serviceName: "ล้างแอร์",
-    date: "26/04/2563",
-    time: "10.00 น.",
-    items: "ล้างแอร์ 9,000 - 18,000 BTU, ติดผนัง 2 เครื่อง",
-    orderCode: "AD04071205",
-    totalPrice: "1,550.00 ฿",
-    address: "444/4 คอนโดสุภาลัย เสนานิคม จตุจักร กรุงเทพฯ",
-  },
-  {
-    id: 3,
-    serviceName: "ล้างแอร์",
-    date: "25/04/2563",
-    time: "13.00 น.",
-    items: "ล้างแอร์ 9,000 - 18,000 BTU, ติดผนัง 2 เครื่อง",
-    orderCode: "AD04071205",
-    totalPrice: "1,550.00 ฿",
-    address: "444/4 คอนโดสุภาลัย เสนานิคม จตุจักร กรุงเทพฯ",
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-// ============================================================
+// แปลง "2024-04-25" → "25/04/2567" (พ.ศ.)
+const formatThaiDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const y = date.getUTCFullYear() + 543;
+  return `${d}/${m}/${y}`;
+};
+
+// แปลง "13:00:00" → "13.00 น."
+const formatThaiTime = (timeStr: string): string => {
+  const [h, m] = timeStr.split(":");
+  return `${h}.${m} น.`;
+};
+
+// แปลง API response → ServiceRequest สำหรับ UI
+const mapToServiceRequest = (raw: any): ServiceRequest => ({
+  ...raw,
+  serviceName: raw.service_names?.join(", ") ?? "-",
+  date: raw.appointment_date ? formatThaiDate(raw.appointment_date) : "-",
+  time: raw.appointment_time ? formatThaiTime(raw.appointment_time) : "-",
+  items: raw.item_names?.join(", ") ?? "-",
+  orderCode: raw.order_code,
+  totalPrice: `${Number(raw.net_price).toLocaleString("th-TH", { minimumFractionDigits: 2 })} ฿`,
+});
+
 // Main Page
-// ============================================================
+
 const ServiceRequests = () => {
   const { state, isAuthenticated } = useAuth();
-  // "available" = เปิดรับงาน, "unavailable" = ปิดรับงาน
-  const [status, setStatus] = useState<"available" | "unavailable">(
-    "available",
-  );
-  const [requests, setRequests] = useState<ServiceRequest[]>(MOCK_REQUESTS);
+  const [requests, setRequests] = useState<ServiceRequest[]>([]); //???
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(
     null,
   );
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  // Fn1: ยิง API เพื่อดึงออเดอร์ที่ลูกค้าชำระเงินแล้ว และพร้อมให้ช่างรับงาน (ตามเงื่อนไขของ backend)
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${API_URL}/api/technician-orders/orders/available`,
+      );
+      setRequests(data.map(mapToServiceRequest)); // ??
+    } catch (err) {
+      console.error("Error fetching orders", err);
+      toast.error("ไม่สามารถโหลดรายการงานได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fn2: รับพิกัดจาก useLocation → PATCH ไป backend → refetch orders ใหม่ (เผื่อมีการอัปเดตงานตาม location)
+  const handleRefreshed = async (lat: number, lng: number) => {
+    try {
+      await axios.patch(`${API_URL}/api/technician-profile/location`, {
+        latitude: lat,
+        longitude: lng,
+      });
+      await fetchOrders();
+    } catch (err) {
+      console.error("Error updating location", err);
+      toast.error("ไม่สามารถอัปเดตตำแหน่งได้");
+    }
+  };
+
+  // ใช้ custom hook สำหรับจัดการ location (ดึงจาก backend ตอนเริ่มต้น, แปลงเป็น text, รีเฟรชจาก GPS)
+  const { locationText, isRefreshing, refreshLocation, initLocation } =
+    useLocation(handleRefreshed);
+
+  // ตอนเริ่มต้น: ดึง orders + location จาก backend
+  useEffect(() => {
+    const init = async () => {
+      await fetchOrders();
+      try {
+        const { data } = await axios.get(
+          `${API_URL}/api/technician-profile/profile`,
+        );
+        await initLocation(
+          data.latitude ? Number(data.latitude) : null,
+          data.longitude ? Number(data.longitude) : null,
+        );
+      } catch (err) {
+        // ไม่มี location ก็ไม่เป็นไร แสดง "ยังไม่มีข้อมูลตำแหน่ง" ตามเดิม
+        console.error("Error initializing location", err);
+      }
+    };
+    init();
+  }, []);
 
   // กดรับงาน → เปิด modal
   const handleAccept = (request: ServiceRequest) => {
     setSelectedRequest(request);
   };
 
-  // ยืนยันรับงาน → ลบออกจากรายการ + ปิด modal
-  const handleConfirmAccept = () => {
+  // ยืนยันรับงาน → POST /api/technician-orders/orders/:id/accept
+  const handleConfirmAccept = async () => {
     if (!selectedRequest) return;
-    setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id));
-    setSelectedRequest(null);
+    setIsConfirming(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/technician-orders/orders/${selectedRequest.id}/accept`,
+      );
+      toast.success("รับงานเรียบร้อยแล้ว");
+      setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id));
+      setSelectedRequest(null);
+    } catch (err: any) {
+      // 409 = มีช่างรับงานนี้ไปแล้ว
+      if (err.response?.status === 409) {
+        toast.error("งานนี้ถูกรับไปแล้ว");
+        setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id));
+        setSelectedRequest(null);
+      } else {
+        toast.error("ไม่สามารถรับงานได้ กรุณาลองใหม่อีกครั้ง");
+      }
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
-  // ปฏิเสธงาน → ลบออกจากรายการ
-  const handleReject = (id: number) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+  // ปฏิเสธงาน → POST /api/technician-orders/orders/:id/reject
+  const handleReject = async (id: number) => {
+    try {
+      await axios.post(`${API_URL}/api/technician-orders/orders/${id}/reject`);
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+    } catch {
+      toast.error("ไม่สามารถปฏิเสธงานได้ กรุณาลองใหม่อีกครั้ง");
+    }
   };
 
   return (
@@ -84,93 +154,52 @@ const ServiceRequests = () => {
         <div className="font-prompt space-y-4 w-full">
           {/* Location Banner */}
           <div className="bg-blue-100 border border-blue-300 rounded-xl px-5 py-4 flex items-center gap-4">
-            {/* ซ้าย: MapPin icon */}
             <MapPin size={22} className="text-blue-600 shrink-0" />
-
-            {/* กลาง: ตำแหน่ง + ที่อยู่ — flex-1 กินพื้นที่ที่เหลือ */}
             <div className="flex-1">
               <p className="text-[14px] text-blue-800 font-normal">
                 ตำแหน่งที่อยู่ปัจจุบัน
               </p>
               <p className="text-[16px] text-blue-600 font-normal">
-                332 อาคารเดอะไนน์ทาวเวอร์ เสนานิคม จตุจักร กรุงเทพฯ
+                {locationText || "ยังไม่มีข้อมูลตำแหน่ง"}
               </p>
             </div>
-
-            {/* ขวา: ปุ่มรีเฟรช */}
-            <button className="border border-blue-600 bg-blue-100 text-blue-600 text-[16px] font-medium px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors shrink-0 cursor-pointer">
-              รีเฟรช
+            <button
+              onClick={refreshLocation}
+              disabled={isRefreshing}
+              className="border border-blue-600 bg-blue-100 text-blue-600 text-[16px] font-medium px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors shrink-0 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            >
+              {isRefreshing ? (
+                <Spinner className="w-4 h-4 text-blue-600" />
+              ) : (
+                "รีเฟรช"
+              )}
             </button>
           </div>
 
-          {/* Status: Available → แสดงรายการงาน */}
-          {status === "available" ? (
-            <div className="space-y-4">
-              {requests.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-200 py-16 flex flex-col items-center justify-center gap-3 text-center">
-                  <Bell size={40} className="text-gray-300" />
-                  <p className="text-gray-400 text-[15px]">
-                    ไม่มีคำขอบริการในขณะนี้
-                  </p>
-                </div>
-              ) : (
-                requests.map((request) => (
-                  <ServiceRequestCard
-                    key={request.id}
-                    request={request}
-                    onAccept={handleAccept}
-                    onReject={handleReject}
-                  />
-                ))
-              )}
+          {/* Orders List */}
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <Spinner className="w-8 h-8 text-blue-600" />
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 py-16 flex flex-col items-center justify-center gap-3 text-center">
+              <Bell size={40} className="text-gray-300" />
+              <p className="text-gray-400 text-[15px]">
+                ไม่มีคำขอบริการในขณะนี้
+              </p>
             </div>
           ) : (
-            /* Status: Unavailable → แสดงหน้าแจ้งเตือน */
-            <div className="bg-white rounded-xl border border-gray-300 py-16 flex flex-col items-center justify-center gap-4 text-center px-6">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                <Bell size={32} className="text-blue-500" />
-              </div>
-              <div>
-                <h3 className="text-[20px] font-semibold text-gray-900 mb-2">
-                  ต้องการรับแจ้งเตือนคำขอบริการสั่งซ่อม?
-                </h3>
-                <p className="text-[16px] text-gray-700 font-light mx-auto">
-                  เปิดใช้งานสถานะพร้อมให้บริการ
-                  เพื่อแสดงรายการและรับงานซ่อมในบริเวณตำแหน่งที่คุณอยู่{" "}
-                </p>
-              </div>
-              <button
-                onClick={() => setStatus("available")}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[16px] font-medium px-6 py-3 rounded-xl transition-colors cursor-pointer mt-5"
-              >
-                เปลี่ยนสถานะเป็นพร้อมให้บริการ
-              </button>
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <ServiceRequestCard
+                  key={request.id}
+                  request={request}
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                />
+              ))}
             </div>
           )}
-
-          {/* Dev Toggle — ลบออกเมื่อ connect API จริง */}
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={() => setStatus("available")}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                status === "available"
-                  ? "bg-green-100 border-green-400 text-green-700"
-                  : "bg-gray-100 border-gray-300 text-gray-500"
-              }`}
-            >
-              Status: Available
-            </button>
-            <button
-              onClick={() => setStatus("unavailable")}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                status === "unavailable"
-                  ? "bg-red-100 border-red-400 text-red-700"
-                  : "bg-gray-100 border-gray-300 text-gray-500"
-              }`}
-            >
-              Status: Unavailable
-            </button>
-          </div>
         </div>
 
         {/* Accept Modal */}
@@ -179,6 +208,7 @@ const ServiceRequests = () => {
             request={selectedRequest}
             onConfirm={handleConfirmAccept}
             onCancel={() => setSelectedRequest(null)}
+            isConfirming={isConfirming}
           />
         )}
       </TechnicianLayout>
