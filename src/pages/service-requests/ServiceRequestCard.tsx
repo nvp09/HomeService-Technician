@@ -28,10 +28,12 @@ const ServiceRequestCard = ({
   request,
   onAccept,
   onReject,
+  onViewMap,
 }: {
   request: ServiceRequest;
   onAccept: (request: ServiceRequest) => void;
   onReject: (request: ServiceRequest) => void;
+  onViewMap: (request: ServiceRequest) => void;
 }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-300 p-5 font-prompt overflow-hidden">
@@ -92,7 +94,10 @@ const ServiceRequestCard = ({
             <p className="text-[16px] text-utility-black font-normal">
               {request.address}
             </p>
-            <button className="flex items-center gap-1 text-blue-600 text-[16px] font-semibold mt-1 hover:underline">
+            <button
+              onClick={() => onViewMap(request)}
+              className="flex items-center gap-1 text-blue-600 text-[16px] font-semibold mt-1 hover:underline cursor-pointer"
+            >
               <MapPin size={16} />
               ดูแผนที่
             </button>

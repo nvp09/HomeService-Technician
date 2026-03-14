@@ -10,6 +10,8 @@ import { Spinner } from "@/components/ui/spinner";
 import axios from "axios";
 import { toast } from "sonner";
 import RejectModal from "./RejecModal";
+import dynamic from "next/dynamic";
+const MapModal = dynamic(() => import("./MapModal"), { ssr: false });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -52,6 +54,7 @@ const ServiceRequests = () => {
   const [selectedRejectRequest, setSelectedRejectRequest] =
     useState<ServiceRequest | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [mapRequest, setMapRequest] = useState<ServiceRequest | null>(null);
 
   // fetchOrders ประกาศก่อน handleRefreshed เพื่อไม่ให้ hoisting error เพราะ handleRefreshed เรียกใช้ fetchOrders อยู่ข้างใน
   const fetchOrders = async () => {
@@ -81,8 +84,14 @@ const ServiceRequests = () => {
     }
   };
 
-  const { locationText, isRefreshing, refreshLocation, initLocation } =
-    useLocation(handleRefreshed);
+  const {
+    locationText,
+    isRefreshing,
+    refreshLocation,
+    initLocation,
+    latitude: techLat,
+    longitude: techLng,
+  } = useLocation(handleRefreshed);
 
   // โหลดครั้งแรก: ดึง profile เพื่อรู้ is_available + lat/lng
   useEffect(() => {
@@ -177,6 +186,10 @@ const ServiceRequests = () => {
     }
   };
 
+  const handleViewMap = (request: ServiceRequest) => {
+    setMapRequest(request);
+  };
+
   return (
     <ProtectedRoute
       isLoading={state.getUserLoading}
@@ -259,6 +272,7 @@ const ServiceRequests = () => {
                   request={request}
                   onAccept={handleAccept}
                   onReject={handleReject}
+                  onViewMap={handleViewMap}
                 />
               ))}
             </div>
@@ -280,6 +294,18 @@ const ServiceRequests = () => {
             onConfirm={handleConfirmReject}
             onCancel={() => setSelectedRejectRequest(null)}
             isRejecting={isRejecting}
+          />
+        )}
+
+        {mapRequest && techLat && techLng && (
+          <MapModal
+            customerLat={mapRequest.customer_lat!}
+            customerLng={mapRequest.customer_lng!}
+            technicianLat={techLat}
+            technicianLng={techLng}
+            distanceKm={mapRequest.distance_km}
+            customerName={mapRequest.customer_name}
+            onClose={() => setMapRequest(null)}
           />
         )}
       </TechnicianLayout>

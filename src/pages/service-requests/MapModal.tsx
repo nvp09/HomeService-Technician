@@ -5,7 +5,6 @@ import {
   MapContainer,
   TileLayer,
   Marker,
-  Polyline,
   Popup,
   useMap,
 } from "react-leaflet";
@@ -100,7 +99,7 @@ const MapModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 font-prompt">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
@@ -124,7 +123,7 @@ const MapModal = ({
         {/* Map */}
         {/* h-72 กำหนดความสูงแผนที่ */}
         {/* z-0 ป้องกัน Leaflet controls ทับ modal header */}
-        <div className="h-72 w-full z-0">
+        <div className="h-120 w-full z-0">
           <MapContainer
             center={[technicianLat, technicianLng]}
             zoom={13}
@@ -149,17 +148,6 @@ const MapModal = ({
             <Marker position={[customerLat, customerLng]} icon={customerIcon}>
               <Popup>คุณ {customerName}</Popup>
             </Marker>
-
-            {/* Polyline เส้นเชื่อมระหว่างช่างกับลูกค้า */}
-            <Polyline
-              positions={[
-                [technicianLat, technicianLng],
-                [customerLat, customerLng],
-              ]}
-              color="#2563eb" // blue-600
-              weight={3}
-              dashArray="6 6" // เส้นประ
-            />
 
             {/* FitBounds ปรับ zoom อัตโนมัติให้เห็น marker ทั้งคู่ */}
             <FitBounds
