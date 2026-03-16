@@ -10,11 +10,9 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 
-// ============================================================
 // แก้ปัญหา Leaflet default icon หาย (เกิดเฉพาะใน Next.js/Webpack)
 // Leaflet โหลด icon จาก URL แต่ Next.js bundle ทำให้ path ผิด
-// ต้อง override ด้วย CDN แทนครับ
-// ============================================================
+// ต้อง override ด้วย CDN
 const technicianIcon = L.icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
@@ -35,12 +33,10 @@ const customerIcon = L.icon({
   popupAnchor: [1, -34],
 });
 
-// ============================================================
 // FitBounds Component
 // ทำให้ map zoom และ pan อัตโนมัติให้เห็น marker ทั้งสองพอดี
 // ต้องเป็น component แยกเพราะต้องใช้ useMap() hook
 // ซึ่งใช้ได้แค่ใน child ของ <MapContainer> เท่านั้น
-// ============================================================
 const FitBounds = ({
   techLat,
   techLng,
@@ -69,9 +65,8 @@ const FitBounds = ({
   return null; // ไม่ render อะไร แค่ทำงานใน useEffect
 };
 
-// ============================================================
+
 // Props ที่ MapModal รับ
-// ============================================================
 interface MapModalProps {
   customerLat: number;
   customerLng: number;
@@ -99,7 +94,7 @@ const MapModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 font-prompt">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>

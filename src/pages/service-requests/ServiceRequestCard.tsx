@@ -13,8 +13,8 @@ export interface ServiceRequest {
   customer_lat: number | null;
   customer_lng: number | null;
   remark: string | null;
-  customer_name: string; // ✅ เพิ่ม
-  customer_phone: string; // ✅ เพิ่ม
+  customer_name: string;
+  customer_phone: string;
   // computed fields
   serviceName: string;
   date: string;
@@ -24,17 +24,19 @@ export interface ServiceRequest {
   totalPrice: string;
 }
 
+interface ServiceRequestCardProps {
+  request: ServiceRequest;
+  onAccept: (request: ServiceRequest) => void;
+  onReject: (request: ServiceRequest) => void;
+  onViewMap: (request: ServiceRequest) => void;
+}
+
 const ServiceRequestCard = ({
   request,
   onAccept,
   onReject,
   onViewMap,
-}: {
-  request: ServiceRequest;
-  onAccept: (request: ServiceRequest) => void;
-  onReject: (request: ServiceRequest) => void;
-  onViewMap: (request: ServiceRequest) => void;
-}) => {
+}: ServiceRequestCardProps) => {
   return (
     <div className="bg-white rounded-xl border border-gray-300 p-5 font-prompt overflow-hidden">
       {/* Header */}
@@ -71,7 +73,6 @@ const ServiceRequestCard = ({
             {request.totalPrice}
           </span>
 
-          {/* ✅ เพิ่ม: ชื่อลูกค้า */}
           <span className="headline-5 text-gray-700">ลูกค้า</span>
           <div className="flex items-center gap-1.5">
             <User size={15} className="text-gray-400 shrink-0" />
@@ -80,7 +81,6 @@ const ServiceRequestCard = ({
             </span>
           </div>
 
-          {/* ✅ เพิ่ม: เบอร์โทรลูกค้า */}
           <span className="headline-5 text-gray-700">เบอร์ติดต่อ</span>
           <div className="flex items-center gap-1.5">
             <Phone size={15} className="text-gray-400 shrink-0" />
@@ -103,7 +103,6 @@ const ServiceRequestCard = ({
             </button>
           </div>
 
-          {/* ✅ เพิ่ม: หมายเหตุ — แสดงเฉพาะเมื่อมีค่า */}
           {request.remark && (
             <>
               <span className="headline-5 text-gray-700">หมายเหตุ</span>
