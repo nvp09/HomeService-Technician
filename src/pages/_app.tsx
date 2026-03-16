@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import { Toaster } from "@/components/ui/sonner";
 import jwtInterceptor from "@/utils/jwtInterceptor";
 import { AuthProvider } from "@/contexts/AuthContext";
+import "leaflet/dist/leaflet.css";
 
 jwtInterceptor();
 
