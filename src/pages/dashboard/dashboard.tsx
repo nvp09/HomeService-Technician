@@ -41,6 +41,11 @@ type TechnicianTaskRank = {
   count: number;
 };
 
+type TechnicianDashboardResponse = TechnicianDashboardStats & {
+  performance_raw?: Array<{ date: string; value: number }>;
+  top_tasks?: TechnicianTaskRank[];
+};
+
 type DatePreset = "7d" | "30d" | "thisMonth" | "custom";
 
 const TechnicianDashboardPage = () => {
@@ -51,28 +56,35 @@ const TechnicianDashboardPage = () => {
   const [endDate, setEndDate] = useState<string | null>(null);
   const [series, setSeries] = useState<PerformancePoint[]>([]);
   const [datePreset, setDatePreset] = useState<DatePreset>("30d");
-  // Mock rank งานที่ช่างคนนี้ทำบ่อยที่สุด (ควรเปลี่ยนให้มาจาก backend ภายหลัง)
-  const [topTasks] = useState<TechnicianTaskRank[]>([
-    { id: "job1", jobName: "ล้างแอร์", count: 18 },
-    { id: "job2", jobName: "ซ่อมไฟฟ้า", count: 14 },
-    { id: "job3", jobName: "ติดตั้งปลั๊ก / สวิตช์", count: 11 },
-    { id: "job4", jobName: "ตรวจเช็กระบบน้ำ", count: 7 },
-    { id: "job5", jobName: "แก้ปัญหาท่อน้ำอุดตัน", count: 5 },
-  ]);
+  const [topTasks, setTopTasks] = useState<TechnicianTaskRank[]>([]);
+  const [performanceRaw, setPerformanceRaw] = useState<
+    Array<{ date: string; value: number }>
+  >([]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
         // baseURL: "http://localhost:4000/api" → final URL: /technician-dashboard
-        const res = await api.get("/technician-dashboard");
+        const res = await api.get<TechnicianDashboardResponse>(
+          "/technician-dashboard",
+        );
+
+        const data = res.data || ({} as TechnicianDashboardResponse);
+
         setStats({
           ...defaultStats,
-          ...(res.data || {}),
+          ...data,
         });
+        setTopTasks(Array.isArray(data.top_tasks) ? data.top_tasks : []);
+        setPerformanceRaw(
+          Array.isArray(data.performance_raw) ? data.performance_raw : [],
+        );
       } catch (error) {
         console.error("Failed to fetch technician dashboard:", error);
         setStats(defaultStats);
+        setTopTasks([]);
+        setPerformanceRaw([]);
       } finally {
         setIsLoading(false);
       }
@@ -89,35 +101,16 @@ const TechnicianDashboardPage = () => {
     Math.max(0, Math.round(stats.completion_rate)),
   );
 
-  // Mock raw performance data (ต่อวัน) สำหรับเดโมการ filter วันที่
-  const mockPerformanceRaw = [
-    { date: "2026-03-01", value: 1 },
-    { date: "2026-03-02", value: 2 },
-    { date: "2026-03-03", value: 3 },
-    { date: "2026-03-04", value: 1 },
-    { date: "2026-03-05", value: 4 },
-    { date: "2026-03-06", value: 3 },
-    { date: "2026-03-07", value: 2 },
-    { date: "2026-03-08", value: 1 },
-    { date: "2026-03-09", value: 3 },
-    { date: "2026-03-10", value: 2 },
-    { date: "2026-03-11", value: 5 },
-    { date: "2026-03-12", value: 4 },
-    { date: "2026-03-13", value: 2 },
-    { date: "2026-03-14", value: 3 },
-    { date: "2026-03-15", value: 1 },
-  ];
-
   const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 
   const currentSeries = series;
 
-  // ตั้งค่า start/end date ตาม preset (อิงจากวันที่ล่าสุดใน mockPerformanceRaw)
+  // ตั้งค่า start/end date ตาม preset (อิงจากวันที่ล่าสุดใน performanceRaw)
   useEffect(() => {
-    if (datePreset === "custom" || mockPerformanceRaw.length === 0) return;
+    if (datePreset === "custom" || performanceRaw.length === 0) return;
 
     const latest = new Date(
-      mockPerformanceRaw[mockPerformanceRaw.length - 1].date,
+      performanceRaw[performanceRaw.length - 1].date,
     );
     const end = new Date(latest);
     let start = new Date(latest);
@@ -132,9 +125,9 @@ const TechnicianDashboardPage = () => {
 
     setStartDate(formatDate(start));
     setEndDate(formatDate(end));
-  }, [datePreset]);
+  }, [datePreset, performanceRaw]);
 
-  // สร้าง series จาก mockPerformanceRaw ตาม range + ช่วงวันที่
+  // สร้าง series จาก performanceRaw ตาม range + ช่วงวันที่
   useEffect(() => {
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
@@ -142,7 +135,7 @@ const TechnicianDashboardPage = () => {
     const inRange = (d: Date) =>
       (!start || d >= start) && (!end || d <= end);
 
-    const filtered = mockPerformanceRaw.filter((item) => {
+    const filtered = performanceRaw.filter((item) => {
       const d = new Date(item.date);
       return inRange(d);
     });
@@ -177,7 +170,7 @@ const TechnicianDashboardPage = () => {
     });
 
     setSeries(points);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, performanceRaw]);
 
   return (
     <ProtectedRoute
