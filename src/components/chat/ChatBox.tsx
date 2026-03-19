@@ -188,7 +188,7 @@ export default function ChatBox({
 
       <div className="shrink-0">
         <ChatHeader
-          otherUser={otherUser}
+          otherUser={otherUser ?? null}
           orderId={orderId}
         />
       </div>
@@ -197,8 +197,8 @@ export default function ChatBox({
         <MessageList
           messages={messages}
           userId={String(userId)} //กัน type mismatch
-          myUser={myUser}
-          otherUser={otherUser}
+          myUser={myUser ?? null}
+          otherUser={otherUser ?? null}
           typingUser={typingUser}
           bottomRef={bottomRef}
         />
