@@ -66,7 +66,9 @@ const ServiceRequests = () => {
       const { data } = await axios.get(
         `${API_URL}/api/technician-orders/orders/available`,
       );
-      setRequests(data.map(mapToServiceRequest));
+      const mapped = data.map(mapToServiceRequest);
+      setRequests(mapped);
+      localStorage.setItem("pendingCount", String(mapped.length));
     } catch {
       toast.error("ไม่สามารถโหลดรายการงานได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
