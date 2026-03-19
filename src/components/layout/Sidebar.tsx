@@ -54,7 +54,6 @@ export const menuItems = [
 ];
 
 const Sidebar = () => {
-
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const currentPath = router.pathname;
@@ -78,11 +77,15 @@ const Sidebar = () => {
 
   const fetchCounters = async () => {
     try {
-
       const res = await api.get("/technician/counters");
-
-      setCounters(res.data);
-
+      const pendingFromStorage = Number(
+        localStorage.getItem("pendingCount") ?? 0,
+      );
+      console.log("pendingCount from localStorage:", pendingFromStorage); // ✅ เพิ่ม log เพื่อตรวจสอบค่า
+      setCounters({
+        ...res.data,
+        pending: Number(localStorage.getItem("pendingCount") ?? 0),
+      });
     } catch (error) {
       console.error("Error fetching counters:", error);
     }
@@ -94,7 +97,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     fetchCounters();
-  }, []);
+  }, [router.pathname]);
 
   /* =========================================================
      AUTO REFRESH COUNTERS
@@ -184,14 +187,15 @@ const Sidebar = () => {
 
         <nav className="flex-1 flex flex-col gap-5">
           {menuItems.map((item) => {
-
             const isActive = currentPath === item.path;
 
             /* =========================================================
                ดึง badge จาก counters
             ========================================================= */
 
-            const badgeValue = item.key ? counters[item.key as keyof typeof counters] : null;
+            const badgeValue = item.key
+              ? counters[item.key as keyof typeof counters]
+              : null;
 
             return (
               <Link
@@ -217,7 +221,6 @@ const Sidebar = () => {
                     {badgeValue}
                   </span>
                 )}
-
               </Link>
             );
           })}
@@ -235,7 +238,6 @@ const Sidebar = () => {
             </span>
           </button>
         </div>
-
       </div>
     </>
   );
