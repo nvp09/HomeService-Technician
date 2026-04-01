@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import {
@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTechnicianCounters } from "@/features/technician/pending/services/technician.api";
 
 export const SIDEBAR_WIDTH = 260;
 
@@ -57,6 +58,29 @@ const Sidebar = () => {
   const router = useRouter();
   const currentPath = router.pathname;
   const { logout } = useAuth();
+
+  const [counters, setCounters] = useState({
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+  });
+
+  useEffect(() => {
+    const fetchCounters = async () => {
+      try {
+        const data = await getTechnicianCounters();
+        setCounters({
+          pending: Number(data?.pending) || 0,
+          in_progress: Number(data?.in_progress) || 0,
+          completed: Number(data?.completed) || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching counters:", error);
+      }
+    };
+
+    fetchCounters();
+  }, [router.pathname]);
 
   return (
     <>
@@ -133,6 +157,11 @@ const Sidebar = () => {
           {menuItems.map((item) => {
             const isActive = currentPath === item.path;
 
+            const badgeValue =
+              item.key && item.key in counters
+                ? counters[item.key as keyof typeof counters]
+                : null;
+
             return (
               <Link
                 key={item.path}
@@ -150,6 +179,12 @@ const Sidebar = () => {
                 <span className="flex-1 text-[16px] text-gray-100 font-medium">
                   {item.name}
                 </span>
+
+                {badgeValue !== null && badgeValue > 0 && (
+                  <span className="bg-[#C82438] text-white text-xs w-7 h-7 flex items-center justify-center rounded-full shrink-0">
+                    {badgeValue}
+                  </span>
+                )}
               </Link>
             );
           })}
