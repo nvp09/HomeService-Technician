@@ -61,7 +61,6 @@ export default function LoginTechnicianPage() {
       setModalType("error");
     } else {
       if (result?.role !== "technician") {
-        localStorage.removeItem("token");
         await fetchUser();
         setApiError("บัญชีผู้ใช้ของคุณไม่ได้รับสิทธิ์เข้าใช้งานระบบช่าง");
         setModalType("error");

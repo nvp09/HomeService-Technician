@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import React, { useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabaseClient";
 
 interface User {
   id: number;
@@ -35,7 +36,7 @@ interface RegisterData {
 interface AuthContextValue {
   state: AuthState;
   login: (data: LoginData) => Promise<{ error?: string; role?: string } | void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<{ error?: string } | void>;
   isAuthenticated: boolean;
   fetchUser: () => Promise<void>;
@@ -73,10 +74,26 @@ function AuthProvider({ children }: AuthProviderProps) {
 
   const router = useRouter();
 
+  const clearLegacyToken = (): void => {
+    localStorage.removeItem("token");
+  };
+
+  const getAccessToken = async (): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (!error && data.session?.access_token) {
+        return data.session.access_token;
+      }
+    } catch (err) {
+      console.error("getSession error:", err);
+    }
+    return null;
+  };
+
   // Fn1: ฟังก์ชันสำหรับดึงข้อมูลผู้ใช้จากเซิร์ฟเวอร์ โดยจะตรวจสอบว่ามี token ใน localStorage หรือไม่ หากไม่มี token จะตั้งสถานะผู้ใช้เป็น null และสถานะการโหลดเป็น false
   const fetchUser = async (): Promise<void> => {
-    // ดึง token จาก localStorage เพื่อใช้ในการตรวจสอบสิทธิ์ในการเข้าถึงข้อมูลผู้ใช้
-    const token = localStorage.getItem("token");
+    // ดึง access token ล่าสุดจาก supabase session (รองรับ auto-refresh)
+    const token = await getAccessToken();
     // หากไม่มี token ให้ตั้งสถานะ user เป็น null และ getUserLoading เป็น false เพื่อแสดงว่าการโหลดข้อมูลผู้ใช้เสร็จสิ้น และออกจากฟังก์ชัน
     if (!token) {
       setState((prevState) => ({
@@ -104,7 +121,8 @@ function AuthProvider({ children }: AuthProviderProps) {
       // เมื่อได้รับข้อมูลผู้ใช้สำเร็จ ให้ตรวจสอบว่า role เป็น technician เท่านั้น
       // หาก token เป็นของ user role อื่น ให้ล้าง token และ set user เป็น null
       if (response.data.role !== "technician") {
-        localStorage.removeItem("token");
+        await supabase.auth.signOut();
+        clearLegacyToken();
         setState((prevState) => ({
           ...prevState,
           user: null,
@@ -124,7 +142,8 @@ function AuthProvider({ children }: AuthProviderProps) {
 
       if (axiosError.response?.status === 401) {
         // หาก token ไม่ถูกต้องหรือหมดอายุ ให้ลบ token ออกจาก localStorage และตั้งสถานะ user เป็น null
-        localStorage.removeItem("token");
+        await supabase.auth.signOut();
+        clearLegacyToken();
       }
       setState((prevState) => ({
         ...prevState,
@@ -155,16 +174,32 @@ function AuthProvider({ children }: AuthProviderProps) {
         `${apiBaseUrl}/api/auth/login`,
         data,
       );
-      // เมื่อการเข้าสู่ระบบสำเร็จ ให้ดึง token ที่ได้รับจาก API และเก็บไว้ใน localStorage เพื่อใช้ในการตรวจสอบสิทธิ์ในการเข้าถึงข้อมูลผู้ใช้ในอนาคต จากนั้นตั้งสถานะ loading เป็น false และล้าง error
-      const token = response.data.access_token;
-      localStorage.setItem("token", token);
+      if (!response.data?.access_token) {
+        return { error: "ไม่พบ access token จากระบบเข้าสู่ระบบ" };
+      }
+
+      const { error: supabaseLoginError } = await supabase.auth.signInWithPassword(
+        {
+          email: data.email,
+          password: data.password,
+        },
+      );
+      if (supabaseLoginError) {
+        return { error: supabaseLoginError.message };
+      }
+
       // Fetch and set user details
       await fetchUser();
-      // ← ดึง user ล่าสุดจาก localStorage แทนการอ่านจาก state
+      const freshToken = await getAccessToken();
+      if (!freshToken) {
+        return { error: "ไม่พบ session หลังจากเข้าสู่ระบบ" };
+      }
+
+      // ← ดึง user ล่าสุดด้วย token จาก session แทน localStorage
       const userResponse = await axios.get(
         `${apiBaseUrl}/api/auth/get-user`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${freshToken}` },
         },
       );
       return { role: userResponse.data.role }; // ← return role กลับไปยังหน้า login เพื่อใช้ตรวจสอบสิทธิ์
@@ -214,8 +249,13 @@ function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Logout user
-  const logout = () => {
-    localStorage.removeItem("token");
+  const logout = async (): Promise<void> => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("supabase signOut error:", err);
+    }
+    clearLegacyToken();
     setState({
       user: null,
       error: null,
