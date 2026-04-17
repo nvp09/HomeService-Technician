@@ -172,7 +172,10 @@ function AuthProvider({ children }: AuthProviderProps) {
       // ส่งคำขอเข้าสู่ระบบไปยัง API และรอผลลัพธ์โดยแนบข้อมูลการเข้าสู่ระบบที่ผู้ใช้กรอกเข้ามาเข้าไปกับ request ผ่าน axios.post
       const response = await axios.post(
         `${apiBaseUrl}/api/auth/login`,
-        data,
+        {
+          ...data,
+          expectedRole: "technician",
+        },
       );
       if (!response.data?.access_token) {
         return { error: "ไม่พบ access token จากระบบเข้าสู่ระบบ" };
@@ -205,7 +208,10 @@ function AuthProvider({ children }: AuthProviderProps) {
       return { role: userResponse.data.role }; // ← return role กลับไปยังหน้า login เพื่อใช้ตรวจสอบสิทธิ์
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
-      const errorMessage = axiosError.response?.data?.error || "Login failed";
+      const errorMessage =
+        axiosError.response?.status === 403
+          ? "บัญชีผู้ใช้ของคุณไม่ได้รับสิทธิ์เข้าใช้งานระบบช่าง"
+          : axiosError.response?.data?.error || "Login failed";
 
       setState((prevState) => ({
         ...prevState,
