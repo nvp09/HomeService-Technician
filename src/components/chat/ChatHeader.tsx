@@ -9,11 +9,20 @@ type ChatUser = {
 type Props = {
   otherUser: ChatUser | null
   orderId?: string | number
+  onClose?: () => void
 }
 
-export default function ChatHeader({ otherUser, orderId }: Props) {
+export default function ChatHeader({ otherUser, orderId, onClose }: Props) {
 
   const router = useRouter()
+
+  const handleBack = () => {
+    if (onClose) {
+      onClose()
+    } else {
+      router.back()
+    }
+  }
 
   const defaultAvatar =
     "https://cdn-icons-png.flaticon.com/512/149/149071.png"
@@ -30,7 +39,7 @@ export default function ChatHeader({ otherUser, orderId }: Props) {
 
       {/* 🔙 BACK */}
       <button
-        onClick={() => router.back()}
+        onClick={handleBack}
         className="text-xl font-bold active:scale-90 transition"
       >
         ←
@@ -47,7 +56,7 @@ export default function ChatHeader({ otherUser, orderId }: Props) {
 
         {/*  TITLE = งาน */}
         <span className="text-sm font-semibold">
-          งาน #{orderId || "-"}
+          Order ID : {orderId || "-"}
         </span>
 
         {/*  SUBTITLE */}

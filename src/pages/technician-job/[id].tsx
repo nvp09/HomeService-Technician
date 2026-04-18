@@ -10,6 +10,7 @@ import {
 } from "@/features/technician/pending/services/technician.api"
 
 import ChatBadge from "@/components/chat/ChatBadge"
+import ChatModal from "@/components/chat/ChatModal"
 import { useAuth } from "@/contexts/AuthContext"
 
 const MapView = dynamic(
@@ -29,6 +30,7 @@ export default function TechnicianJobDetail() {
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showMap, setShowMap] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   // =========================
   //  รอ router พร้อมก่อน
@@ -181,7 +183,7 @@ export default function TechnicianJobDetail() {
 
               {userId && job.status === "in_progress" && (
                 <button
-                  onClick={() => router.push(`/chat/${job.id}`)}
+                  onClick={() => setIsChatOpen(true)}
                   className="relative w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center shadow active:scale-95"
                 >
                   💬
@@ -212,6 +214,15 @@ export default function TechnicianJobDetail() {
         )}
 
       </div>
+
+      {isChatOpen && userId && (
+        <ChatModal
+          orderId={String(job.id)}
+          userId={userId}
+          role="technician"
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
 
     </TechnicianLayout>
   )

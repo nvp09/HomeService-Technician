@@ -28,7 +28,7 @@ type Props = {
   role: "user" | "technician"
   customer?: ChatUser | null
   technician?: ChatUser | null
-  sendImage?: (imageUrl: string) => void
+  onClose?: () => void
 }
 
 // =======================
@@ -43,6 +43,7 @@ export default function ChatBox({
   role,
   customer,
   technician,
+  onClose,
 }: Props) {
 
   const [messages, setMessages] = useState<Message[]>([])
@@ -82,7 +83,6 @@ export default function ChatBox({
       try {
 
         const url = `${BASE}/chat/messages/${orderId}?userId=${userId}`
-        console.log("📥 fetch messages:", url)
 
         const res = await fetch(url)
 
@@ -183,12 +183,13 @@ export default function ChatBox({
 
   // =================
   return (
-    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-100 overflow-hidden">
 
       <div className="shrink-0">
         <ChatHeader
           otherUser={otherUser ?? null}
           orderId={orderId}
+          onClose={onClose}
         />
       </div>
 
