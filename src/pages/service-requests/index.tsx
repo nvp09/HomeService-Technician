@@ -166,6 +166,7 @@ const ServiceRequests = () => {
       toast.success("รับงานเรียบร้อยแล้ว");
       setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id));
       setSelectedRequest(null);
+      await router.push("/pending-items");
     } catch (err: any) {
       if (err.response?.status === 409) {
         toast.error("งานนี้ถูกรับไปแล้ว");

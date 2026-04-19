@@ -31,6 +31,7 @@ export default function TechnicianJobDetail() {
   const [loading, setLoading] = useState(true)
   const [showMap, setShowMap] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   // =========================
   //  รอ router พร้อมก่อน
@@ -107,6 +108,10 @@ export default function TechnicianJobDetail() {
   // =========================
   const handleCompleteJob = async () => {
 
+    if (isCompleting) return
+
+    setIsCompleting(true)
+
     try {
 
       await completeJob(Number(job.id))
@@ -119,6 +124,7 @@ export default function TechnicianJobDetail() {
 
       console.error("❌ Complete job error:", error)
       toast.error("เกิดข้อผิดพลาด")
+      setIsCompleting(false)
 
     }
 
@@ -205,10 +211,12 @@ export default function TechnicianJobDetail() {
         {job.status === "in_progress" && (
           <div className="mt-6 flex justify-end">
             <button
+              type="button"
               onClick={handleCompleteJob}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+              disabled={isCompleting}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none"
             >
-              เสร็จงาน
+              {isCompleting ? "กำลังบันทึก..." : "เสร็จงาน"}
             </button>
           </div>
         )}
