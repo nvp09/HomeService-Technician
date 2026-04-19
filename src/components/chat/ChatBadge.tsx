@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react"
-import { getSocket } from "@/lib/socket"
-import api from "@/lib/api"
+import { getSocket, connectSocket } from "@/lib/socket"
+
+/** Same as customer side: use fetch for consistency */
+const API = (process.env.NEXT_PUBLIC_API_URL as string).replace(/\/$/, "")
+const BASE = API.endsWith("/api") ? API : `${API}/api`
+
+type ChatMessagesReadDetail = {
+  orderId: string
+}
 
 type Props = {
   orderId: string
@@ -20,12 +27,14 @@ export default function ChatBadge({ orderId, userId }: Props) {
 
     const loadUnread = async () => {
       try {
-        const res = await api.get<{ count?: number }>(
-          `/chat/messages/unread/${orderId}/${userId}`
-        )
-        setCount(Number(res.data?.count) || 0)
-      } catch {
-        setCount(0)
+        const url = `${BASE}/chat/messages/unread/${orderId}/${userId}`
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setCount(Number(data.count) || 0)
+        }
+      } catch (err) {
+        console.error("❌ loadUnread error:", err)
       }
     }
 
@@ -35,11 +44,32 @@ export default function ChatBadge({ orderId, userId }: Props) {
 
 
   // =========================
+  // CLEAR WHEN USER OPENS CHAT (mark-read runs in ChatBox)
+  // =========================
+  useEffect(() => {
+    if (!orderId) return
+
+    const onRead = (ev: Event) => {
+      const detail = (ev as CustomEvent<ChatMessagesReadDetail>).detail
+      if (String(detail?.orderId) === String(orderId)) {
+        setCount(0)
+      }
+    }
+
+    window.addEventListener("CHAT_MESSAGES_READ", onRead)
+    return () => window.removeEventListener("CHAT_MESSAGES_READ", onRead)
+  }, [orderId])
+
+
+  // =========================
   // SOCKET REALTIME
   // =========================
   useEffect(() => {
 
     if (!orderId || !userId) return
+
+    // 🔥 สั่งเชื่อมต่อเพื่อให้ฟัง event ได้แม้ยังไม่ได้เปิดแชท
+    connectSocket()
 
     const socket = getSocket()
 
@@ -47,19 +77,22 @@ export default function ChatBadge({ orderId, userId }: Props) {
       return
     }
 
-    const handleNewMessage = (msg: {
-      order_id?: string | number
-      sender_id?: string | number
-    }) => {
+    // 🔥 Join Chat เพื่อให้ได้รับสัญญาณของ Order นี้
+    socket.emit("join_chat", {
+      order_id: String(orderId),
+      user_id: String(userId)
+    })
+
+    const handleNewMessage = (msg: any) => {
       if (!msg) return
 
+      // ถ้าเป็น Order เดียวกัน และคนส่ง "ไม่ใช่ช่าง" ให้เพิ่มเลข
       if (
         String(msg.order_id) === String(orderId) &&
-        String(msg.sender_id) !== String(userId)
+        msg.sender_role !== "technician"
       ) {
         setCount(prev => prev + 1)
       }
-
     }
 
     socket.on("receive_message", handleNewMessage)
@@ -69,24 +102,6 @@ export default function ChatBadge({ orderId, userId }: Props) {
     }
 
   }, [orderId, userId])
-
-
-  // =========================
-  // RESET เมื่อกลับมา focus
-  // =========================
-  useEffect(() => {
-
-    const handleFocus = () => {
-      setCount(0)
-    }
-
-    window.addEventListener("focus", handleFocus)
-
-    return () => {
-      window.removeEventListener("focus", handleFocus)
-    }
-
-  }, [])
 
 
   // =========================
