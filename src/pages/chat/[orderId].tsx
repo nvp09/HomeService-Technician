@@ -60,7 +60,6 @@ export default function ChatPage() {
         <ChatBox
           orderId={orderId}
           userId={String(user.id)}
-          role={role}
         />
       </div>
     </div>

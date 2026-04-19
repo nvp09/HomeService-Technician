@@ -48,7 +48,7 @@ export default function ChatModal({ orderId, userId, role, onClose }: Props) {
         <ChatBox 
           orderId={orderId} 
           userId={userId} 
-          role={role} 
+          onClose={onClose}
         />
       </div>
     </div>

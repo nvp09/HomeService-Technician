@@ -1,7 +1,7 @@
 import { useRouter } from "next/router"
 
 type ChatUser = {
-  id: string
+  id: string | number
   name: string
   avatar?: string
 }
