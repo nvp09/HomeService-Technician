@@ -10,6 +10,7 @@ import {
 } from "@/features/technician/pending/services/technician.api"
 
 import ChatBadge from "@/components/chat/ChatBadge"
+import ChatModal from "@/components/chat/ChatModal"
 import { useAuth } from "@/contexts/AuthContext"
 
 const MapView = dynamic(
@@ -29,6 +30,8 @@ export default function TechnicianJobDetail() {
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showMap, setShowMap] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   // =========================
   //  รอ router พร้อมก่อน
@@ -105,6 +108,10 @@ export default function TechnicianJobDetail() {
   // =========================
   const handleCompleteJob = async () => {
 
+    if (isCompleting) return
+
+    setIsCompleting(true)
+
     try {
 
       await completeJob(Number(job.id))
@@ -117,6 +124,7 @@ export default function TechnicianJobDetail() {
 
       console.error("❌ Complete job error:", error)
       toast.error("เกิดข้อผิดพลาด")
+      setIsCompleting(false)
 
     }
 
@@ -181,7 +189,7 @@ export default function TechnicianJobDetail() {
 
               {userId && job.status === "in_progress" && (
                 <button
-                  onClick={() => router.push(`/chat/${job.id}`)}
+                  onClick={() => setIsChatOpen(true)}
                   className="relative w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center shadow active:scale-95"
                 >
                   💬
@@ -203,15 +211,26 @@ export default function TechnicianJobDetail() {
         {job.status === "in_progress" && (
           <div className="mt-6 flex justify-end">
             <button
+              type="button"
               onClick={handleCompleteJob}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+              disabled={isCompleting}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none"
             >
-              เสร็จงาน
+              {isCompleting ? "กำลังบันทึก..." : "เสร็จงาน"}
             </button>
           </div>
         )}
 
       </div>
+
+      {isChatOpen && userId && (
+        <ChatModal
+          orderId={String(job.id)}
+          userId={userId}
+          role="technician"
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
 
     </TechnicianLayout>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, Bell } from "lucide-react";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import ServiceRequestCard, { ServiceRequest } from "@/components/service-requests/ServiceRequestCard";
@@ -6,6 +6,7 @@ import AcceptModal from "@/components/service-requests/AcceptModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/router";
 import { useLocation } from "@/hooks/useLocation";
+import useTechnicianNotification from "@/hooks/useTechnicianNotification";
 import { Spinner } from "@/components/ui/spinner";
 import axios from "axios";
 import { toast } from "sonner";
@@ -60,7 +61,7 @@ const ServiceRequests = () => {
   // ใช้ ref ป้องกัน init รันซ้ำ
   const hasInitialized = useRef(false);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get(
@@ -74,7 +75,7 @@ const ServiceRequests = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleRefreshed = async (lat: number, lng: number) => {
     try {
@@ -165,6 +166,7 @@ const ServiceRequests = () => {
       toast.success("รับงานเรียบร้อยแล้ว");
       setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id));
       setSelectedRequest(null);
+      await router.push("/pending-items");
     } catch (err: any) {
       if (err.response?.status === 409) {
         toast.error("งานนี้ถูกรับไปแล้ว");
@@ -201,6 +203,18 @@ const ServiceRequests = () => {
   };
 
   const handleViewMap = (request: ServiceRequest) => setMapRequest(request);
+
+  useTechnicianNotification({
+    technicianId: state.user?.id ?? null,
+    enabled: Boolean(
+      isAuthenticated &&
+      state.user?.role === "technician" &&
+      isAvailable === true,
+    ),
+    onNewNotification: () => {
+      fetchOrders();
+    },
+  });
 
   // ✅ ระหว่างเช็ค auth หรือ init → Spinner ชั้นเดียว ไม่มี ProtectedRoute ซ้อน
   if (state.getUserLoading !== false || isInitializing) {

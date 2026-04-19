@@ -7,9 +7,9 @@ import { getSocket, connectSocket } from "@/lib/socket"
 
 // =======================
 type Message = {
-  id: string
-  order_id: string
-  sender_id: string
+  id: string | number
+  order_id: string | number
+  sender_id: string | number
   message?: string
   image?: string
   created_at: string
@@ -17,7 +17,7 @@ type Message = {
 }
 
 type ChatUser = {
-  id: string
+  id: string | number
   name: string
   avatar?: string
 }
@@ -25,10 +25,9 @@ type ChatUser = {
 type Props = {
   orderId: string
   userId: string
-  role: "user" | "technician"
   customer?: ChatUser | null
   technician?: ChatUser | null
-  sendImage?: (imageUrl: string) => void
+  onClose?: () => void
 }
 
 // =======================
@@ -40,9 +39,9 @@ const BASE = API.endsWith("/api") ? API : `${API}/api`
 export default function ChatBox({
   orderId,
   userId,
-  role,
   customer,
   technician,
+  onClose,
 }: Props) {
 
   const [messages, setMessages] = useState<Message[]>([])
@@ -54,10 +53,9 @@ export default function ChatBox({
   const bottomRef = useRef<HTMLDivElement>(null)
   const typingTimeout = useRef<any>(null)
 
-  const isTechnician = role === "technician"
-
-  const otherUser = isTechnician ? customer : technician
-  const myUser = isTechnician ? technician : customer
+  // สำหรับฝั่งช่าง
+  const otherUser = customer
+  const myUser = technician
 
   const otherOnline =
     otherUser?.id
@@ -82,18 +80,34 @@ export default function ChatBox({
       try {
 
         const url = `${BASE}/chat/messages/${orderId}?userId=${userId}`
-        console.log("📥 fetch messages:", url)
 
         const res = await fetch(url)
 
         if (!res.ok) {
-          const text = await res.text()
-          console.error("❌ messages error:", res.status, text)
           return
         }
 
         const data: Message[] = await res.json()
         setMessages(data)
+
+        // Mark as read ทันทีที่โหลดแชท
+        try {
+          await fetch(`${BASE}/chat/messages/read/${orderId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: String(userId) }),
+          })
+        } catch {
+          /* ignore */
+        }
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("CHAT_MESSAGES_READ", {
+              detail: { orderId: String(orderId) },
+            }),
+          )
+        }
 
       } catch (err) {
         console.error("❌ loadMessages:", err)
@@ -179,16 +193,35 @@ export default function ChatBox({
   // =================
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+
+    // เมื่อมีข้อความใหม่มาและเรากำลังดูอยู่ ให้สั่ง Mark as read ทันที
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1]
+      if (String(lastMsg.sender_id) !== String(userId)) {
+        fetch(`${BASE}/chat/messages/read/${orderId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: String(userId) }),
+        }).then(() => {
+          window.dispatchEvent(
+            new CustomEvent("CHAT_MESSAGES_READ", {
+              detail: { orderId: String(orderId) },
+            }),
+          )
+        })
+      }
+    }
   }, [messages])
 
   // =================
   return (
-    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-100 overflow-hidden">
 
       <div className="shrink-0">
         <ChatHeader
           otherUser={otherUser ?? null}
           orderId={orderId}
+          onClose={onClose}
         />
       </div>
 

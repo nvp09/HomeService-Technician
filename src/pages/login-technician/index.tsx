@@ -239,21 +239,11 @@ export default function LoginTechnicianPage() {
                 )}
               </div>
 
-              {/* FORGOT PASSWORD */}
-              <div className="text-right -mt-2">
-                <Link
-                  href="/forgot-password"
-                  className="text-[13px] text-blue-600 hover:underline"
-                >
-                  ลืมรหัสผ่าน?
-                </Link>
-              </div>
-
               {/* SUBMIT */}
               <button
                 type="submit"
                 disabled={state.loading ?? false}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-[14px] font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-200 cursor-pointer"
+                className="w-full h-12 mt-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-[14px] font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-200 cursor-pointer"
               >
                 {state.loading ? (
                   <>

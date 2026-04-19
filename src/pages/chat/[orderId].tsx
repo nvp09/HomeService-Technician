@@ -55,14 +55,13 @@ export default function ChatPage() {
   // RENDER CHAT
   // =========================
   return (
-    <div className="h-screen overflow-hidden">
-
-      <ChatBox
-        orderId={orderId}
-        userId={String(user.id)}
-        role={role}
-      />
-
+    <div className="h-screen bg-gray-50 flex items-center justify-center sm:p-4 font-prompt">
+      <div className="w-full h-dvh sm:h-[min(90vh,720px)] sm:max-w-lg sm:rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white">
+        <ChatBox
+          orderId={orderId}
+          userId={String(user.id)}
+        />
+      </div>
     </div>
   )
 }

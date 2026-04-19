@@ -11,7 +11,7 @@ type Message = {
 }
 
 type ChatUser = {
-  id: string
+  id: string | number
   name: string
   avatar?: string
 }
